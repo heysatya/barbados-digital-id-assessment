@@ -750,11 +750,12 @@ Required steps for secure deployment:
    - Validate build locally by running: `npm run build`. Fix any type or linting errors.
    - To push the code to a NEW GitHub repository (Initial Commit):
      ```bash
-     git init
+     # Since you cloned this from the legacy repo, you must CHANGE the remote URL
+     # Do NOT use 'git remote add' as 'origin' already exists.
+     git remote set-url origin https://github.com/heysatya/barbados-digital-id-assessment.git
      git add .
      git commit -m "Initial commit: Barbados Digital ID Assessment Framework"
      git branch -M main
-     git remote add origin https://github.com/YOUR_GITHUB_USERNAME/barbados-digital-id-assessment.git
      git push -u origin main
      ```
    - To push updates to an EXISTING GitHub repository:

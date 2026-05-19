@@ -4,13 +4,13 @@ import { resolve } from 'path';
 
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
-const supabaseUrl = 'https://bubdgmlebrquvicdgwnha.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1YmRnbWxlYnJxdmljZGd3bmhhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDg0OTM5MywiZXhwIjoyMDkwNDI1MzkzfQ.-qOceofz4YUllw5MR8X0ZihW8Fe90Wo9gg1oU6KDnTQ';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 console.log('URL:', supabaseUrl);
-console.log('Key (first 10 chars):', supabaseServiceKey.substring(0, 10));
+console.log('Key (first 10 chars):', supabaseKey?.substring(0, 10));
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testConnection() {
   const { data, error } = await supabase.from('assessment_sessions').select('count', { count: 'exact', head: true });
