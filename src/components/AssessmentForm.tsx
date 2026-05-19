@@ -2,17 +2,16 @@
 
 import { useState, Suspense, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { frameworkQuestions, FrameworkQuestion } from '@/data/frameworkQuestions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { 
-  CheckCircle2, 
-  ChevronRight, 
-  ChevronLeft, 
-  Building2, 
-  FileCheck2, 
+import {
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  Building2,
+  FileCheck2,
   Send,
   Info,
   Lock,
@@ -105,9 +104,9 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
 
   // Validation
   const isProfileComplete = Boolean(
-    details.organization_name && 
-    details.organization_type && 
-    details.role_function && 
+    details.organization_name &&
+    details.organization_type &&
+    details.role_function &&
     (survey_type === 'stakeholder' ? details.stakeholder_category : true)
   );
 
@@ -151,28 +150,21 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
     setIsSubmitting(true);
 
     try {
-      // 1. Create Assessment Session
-      const { data: session, error: sessionError } = await supabase
-        .from('assessment_sessions')
-        .insert([{
-          country: details.country,
-          survey_type: survey_type,
-          organization_name: details.organization_name,
-          organization_type: details.organization_type,
-          role_function: details.role_function,
-          stakeholder_category: details.stakeholder_category || null,
-          environment_mode: mode,
-          rubric_version: '3.0',
-          status: 'submitted'
-        }])
-        .select()
-        .single();
+      // 1. Prepare Session Data
+      const sessionData = {
+        country: details.country,
+        survey_type: survey_type,
+        organization_name: details.organization_name,
+        organization_type: details.organization_type,
+        role_function: details.role_function,
+        stakeholder_category: details.stakeholder_category || null,
+        environment_mode: mode,
+        rubric_version: '3.0',
+        status: 'submitted'
+      };
 
-      if (sessionError || !session) throw sessionError || new Error("Failed to create session");
-
-      // 2. Insert Responses
-      const responseInserts = filteredQuestions.map(q => ({
-        assessment_id: session.id,
+      // 2. Prepare Responses Data
+      const responsesData = filteredQuestions.map(q => ({
         q_code: q.q_code,
         pillar_code: q.pillar_code,
         subpillar_code: q.subpillar_code,
@@ -180,17 +172,27 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
         evidence_comment: evidence[q.q_code] || null
       }));
 
-      const { error: responsesError } = await supabase
-        .from('assessment_responses')
-        .insert(responseInserts);
+      // 3. Submit to Serverless API Route
+      const res = await fetch('/api/assessment/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionData, responsesData }),
+      });
 
-      if (responsesError) throw responsesError;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to submit assessment');
+      }
+
+      const { sessionId } = await res.json();
 
       // Clear progress
       localStorage.removeItem(`assessment_progress_${survey_type}`);
-      
-      // Redirect
-      window.location.href = '/thank-you';
+
+      // Redirect using the ID!
+      window.location.href = `/thank-you?id=${sessionId}`;
     } catch (err: unknown) {
       console.error("Submission error:", err);
       const message = err instanceof Error ? err.message : 'Unknown error';
@@ -204,7 +206,7 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
   return (
     <div className="min-h-screen bg-bg-secondary text-text-primary py-12 px-4 md:px-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
+
         {/* Sidebar Navigation */}
         <aside className="lg:col-span-1 space-y-6">
           <div className="sticky top-8 space-y-8 p-8 rounded-[2rem] bg-bg-primary border border-border-muted shadow-panel">
@@ -250,16 +252,14 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                       setCurrentSectionIndex(idx);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all ${
-                      isActive 
-                        ? 'bg-bbb-blue-muted text-bbb-blue border border-bbb-blue/10' 
-                        : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary border border-transparent'
-                    }`}
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all ${isActive
+                      ? 'bg-bbb-blue-muted text-bbb-blue border border-bbb-blue/10'
+                      : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary border border-transparent'
+                      }`}
                   >
-                    <div className={`p-1.5 rounded-lg ${
-                      isCompleted && !isActive ? 'bg-success-muted text-success' : 
+                    <div className={`p-1.5 rounded-lg ${isCompleted && !isActive ? 'bg-success-muted text-success' :
                       isActive ? 'bg-bbb-blue text-white shadow-sm' : 'bg-bg-secondary'
-                    }`}>
+                      }`}>
                       {isCompleted && !isActive ? <CheckCircle2 className="w-4 h-4" /> : icon}
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] truncate text-left">{label}</span>
@@ -301,10 +301,10 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-3">
                           <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Organization Name <span className="text-bbb-blue">*</span></label>
-                          <input 
-                            type="text" 
-                            name="organization_name" 
-                            value={details.organization_name} 
+                          <input
+                            type="text"
+                            name="organization_name"
+                            value={details.organization_name}
                             onChange={handleDetailsChange}
                             placeholder="e.g. Ministry of Industry"
                             className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all placeholder:text-text-tertiary/50"
@@ -312,9 +312,9 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                         </div>
                         <div className="space-y-3">
                           <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Organization Type <span className="text-bbb-blue">*</span></label>
-                          <select 
-                            name="organization_type" 
-                            value={details.organization_type} 
+                          <select
+                            name="organization_type"
+                            value={details.organization_type}
                             onChange={handleDetailsChange}
                             className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all"
                           >
@@ -328,10 +328,10 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                         </div>
                         <div className="space-y-3">
                           <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Your Role / Function <span className="text-bbb-blue">*</span></label>
-                          <input 
-                            type="text" 
-                            name="role_function" 
-                            value={details.role_function} 
+                          <input
+                            type="text"
+                            name="role_function"
+                            value={details.role_function}
                             onChange={handleDetailsChange}
                             placeholder="e.g. Policy Advisor"
                             className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all placeholder:text-text-tertiary/50"
@@ -340,9 +340,9 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                         {survey_type === 'stakeholder' && (
                           <div className="space-y-3">
                             <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Stakeholder Category <span className="text-bbb-blue">*</span></label>
-                            <select 
-                              name="stakeholder_category" 
-                              value={details.stakeholder_category} 
+                            <select
+                              name="stakeholder_category"
+                              value={details.stakeholder_category}
                               onChange={handleDetailsChange}
                               className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all"
                             >
@@ -397,16 +397,14 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                                     <button
                                       key={opt.score}
                                       onClick={() => handleOptionChange(q.q_code, opt.score)}
-                                      className={`p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
-                                        responses[q.q_code] === opt.score 
-                                          ? 'bg-bbb-blue/5 border-bbb-blue text-bbb-blue shadow-panel-hover' 
-                                          : 'bg-bg-secondary border-transparent text-text-secondary hover:bg-bg-surface hover:border-bbb-blue/20'
-                                      }`}
+                                      className={`p-5 rounded-2xl border-2 text-left transition-all duration-300 ${responses[q.q_code] === opt.score
+                                        ? 'bg-bbb-blue/5 border-bbb-blue text-bbb-blue shadow-panel-hover'
+                                        : 'bg-bg-secondary border-transparent text-text-secondary hover:bg-bg-surface hover:border-bbb-blue/20'
+                                        }`}
                                     >
                                       <div className="flex items-start gap-5">
-                                        <div className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                          responses[q.q_code] === opt.score ? 'border-bbb-blue bg-bbb-blue' : 'border-border-muted'
-                                        }`}>
+                                        <div className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${responses[q.q_code] === opt.score ? 'border-bbb-blue bg-bbb-blue' : 'border-border-muted'
+                                          }`}>
                                           {responses[q.q_code] === opt.score && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                                         </div>
                                         <div>
@@ -421,7 +419,7 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                                 </div>
 
                                 <div className="pt-4">
-                                  <button 
+                                  <button
                                     onClick={() => {
                                       const el = document.getElementById(`evidence-${q.q_code}`);
                                       el?.classList.toggle('hidden');
@@ -472,20 +470,19 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                         </div>
                         <Progress value={progress} className="h-1.5 bg-bg-secondary" />
                         {!isAllAnswered && (
-                           <div className="flex items-center gap-2.5 text-warning text-[10px] font-bold uppercase tracking-widest justify-center bg-warning/5 p-3 rounded-xl border border-warning/10">
+                          <div className="flex items-center gap-2.5 text-warning text-[10px] font-bold uppercase tracking-widest justify-center bg-warning/5 p-3 rounded-xl border border-warning/10">
                             <Info className="w-4 h-4" />
                             {totalQuestions - answeredCount} indicators require evaluation
                           </div>
                         )}
                       </div>
 
-                      <div className={`p-8 rounded-3xl border-2 transition-all duration-300 ${
-                        hasConsented ? 'bg-bbb-blue-muted border-bbb-blue/20' : 'bg-bg-secondary border-border-muted'
-                      }`}>
+                      <div className={`p-8 rounded-3xl border-2 transition-all duration-300 ${hasConsented ? 'bg-bbb-blue-muted border-bbb-blue/20' : 'bg-bg-secondary border-border-muted'
+                        }`}>
                         <div className="flex items-start gap-5">
                           <div className="relative flex items-center">
-                            <input 
-                              type="checkbox" 
+                            <input
+                              type="checkbox"
                               id="consent"
                               checked={hasConsented}
                               onChange={(e) => setHasConsented(e.target.checked)}
@@ -502,7 +499,7 @@ function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) 
                         </div>
                       </div>
 
-                      <button 
+                      <button
                         onClick={handleSubmit}
                         disabled={!isComplete || isSubmitting}
                         className="btn-primary w-full h-16 text-lg flex items-center justify-center gap-4 disabled:opacity-50"

@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { frameworkQuestions, FrameworkQuestion } from '@/data/frameworkQuestions';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -227,26 +226,19 @@ function SurveyShellContent({ survey_type, surveyLabel }: Props) {
     if (!isComplete) return;
     setIsSubmitting(true);
     try {
-      const { data: session, error: sessionError } = await supabase
-        .from('assessment_sessions')
-        .insert([{
-          country: details.country,
-          survey_type,
-          organization_name: details.organization_name,
-          organization_type: details.organization_type,
-          role_function: details.role_function,
-          stakeholder_category: details.stakeholder_category || null,
-          environment_mode: mode,
-          rubric_version: '3.0',
-          status: 'submitted',
-        }])
-        .select()
-        .single();
+      const sessionData = {
+        country: details.country,
+        survey_type,
+        organization_name: details.organization_name,
+        organization_type: details.organization_type,
+        role_function: details.role_function,
+        stakeholder_category: details.stakeholder_category || null,
+        environment_mode: mode,
+        rubric_version: '3.0',
+        status: 'submitted',
+      };
 
-      if (sessionError || !session) throw sessionError || new Error('Failed to create session');
-
-      const responseInserts = filteredQuestions.map(q => ({
-        assessment_id: session.id,
+      const responsesData = filteredQuestions.map(q => ({
         q_code: q.q_code,
         pillar_code: q.pillar_code,
         subpillar_code: q.subpillar_code,
@@ -254,14 +246,23 @@ function SurveyShellContent({ survey_type, surveyLabel }: Props) {
         evidence_comment: evidence[q.q_code] || null,
       }));
 
-      const { error: responsesError } = await supabase
-        .from('assessment_responses')
-        .insert(responseInserts);
+      const res = await fetch('/api/assessment/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionData, responsesData }),
+      });
 
-      if (responsesError) throw responsesError;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to submit assessment');
+      }
+
+      const { sessionId } = await res.json();
 
       localStorage.removeItem(STORAGE_KEY(survey_type));
-      router.push(`/thank-you?id=${session.id}`);
+      router.push(`/thank-you?id=${sessionId}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       alert(`Error submitting assessment: ${message}`);
@@ -754,7 +755,7 @@ function SurveyShellContent({ survey_type, surveyLabel }: Props) {
             disabled={currentSection === 'profile' && !isProfileComplete}
             className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#003DA5] hover:bg-[#1A56C4] text-white rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
-            {currentSectionIndex === sections.length - 2 ? 'Complete Evaluation' : 'Next Step'} <ChevronRight className="w-4 h-4" />
+            {currentSectionIndex === sections.length - 2 ? 'Complete Evaluation' : 'Continue to Next Pillar'} <ChevronRight className="w-4 h-4" />
           </button>
         )}
       </div>

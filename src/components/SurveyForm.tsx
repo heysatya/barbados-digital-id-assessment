@@ -473,7 +473,7 @@ export default function SurveyForm({ audience }: SurveyFormProps) {
               disabled={currentSectionIndex === sections.length - 1 || (currentSection === 'profile' && !isDetailsComplete)}
               className="px-8 py-6 text-sm font-bold rounded-xl bg-[#003DA5] hover:bg-[#1A56C4] text-white shadow-md disabled:bg-gray-200 disabled:text-gray-400"
             >
-              Next Step
+              Continue to Next Pillar
             </Button>
           </div>
 
