@@ -1,78 +1,130 @@
 "use client";
 
-import { useState, Suspense, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { questions } from '@/data/questions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { frameworkQuestions, FrameworkQuestion } from '@/data/frameworkQuestions';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, ChevronRight, ChevronLeft, User, ShieldCheck, FileCheck2, Send } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  ChevronRight, 
+  ChevronLeft, 
+  Building2, 
+  FileCheck2, 
+  Send,
+  Info,
+  Lock,
+  Loader2,
+  ShieldCheck
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-function AssessmentFormContent() {
-  const router = useRouter();
+interface AssessmentFormProps {
+  isStarted: boolean;
+  survey_type: 'expert' | 'stakeholder';
+}
+
+function AssessmentFormContent({ isStarted, survey_type }: AssessmentFormProps) {
   const searchParams = useSearchParams();
 
   // URL parameters
-  const mode = searchParams.get('mode') || 'test';
-  const urlStakeholderType = searchParams.get('type') || '';
+  const mode = (searchParams.get('mode') as 'test' | 'live') || 'live';
 
   // State
-  const [responses, setResponses] = useState<Record<number, string>>({});
+  const [responses, setResponses] = useState<Record<string, number>>({});
+  const [evidence, setEvidence] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
 
   const [details, setDetails] = useState({
-    respondent_name: '',
-    email: '',
-    phone: '',
-    organization: '',
-    stakeholder_type: urlStakeholderType
+    organization_name: '',
+    organization_type: '',
+    role_function: '',
+    stakeholder_category: '',
+    country: 'Barbados'
   });
 
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
-  // Computed data
-  const filteredQuestions = useMemo(() => {
-    if (!details.stakeholder_type) return [];
-    return questions.filter(q =>
-      q.primaryStakeholder === details.stakeholder_type ||
-      q.secondaryStakeholder === details.stakeholder_type ||
-      q.secondaryStakeholder === 'NONE'
-    );
-  }, [details.stakeholder_type]);
+  // Initialize from localStorage if available
+  useEffect(() => {
+    const saved = localStorage.getItem(`assessment_progress_${survey_type}`);
+    if (saved) {
+      try {
+        const { responses: r, evidence: e, details: d } = JSON.parse(saved);
+        setResponses(r || {});
+        setEvidence(e || {});
+        setDetails(prev => ({ ...prev, ...d }));
+      } catch (err: unknown) {
+        console.error("Failed to load progress", err);
+      }
+    }
+  }, [survey_type]);
 
+  // Save to localStorage on change
+  useEffect(() => {
+    if (Object.keys(responses).length > 0 || details.organization_name) {
+      localStorage.setItem(`assessment_progress_${survey_type}`, JSON.stringify({
+        responses,
+        evidence,
+        details
+      }));
+    }
+  }, [responses, evidence, details, survey_type]);
+
+  // Filter questions by survey type
+  const filteredQuestions = useMemo(() => {
+    return frameworkQuestions.filter(q => q.survey_type === survey_type);
+  }, [survey_type]);
+
+  // Group by Pillars for navigation
   const activePillars = useMemo(() => {
-    return Array.from(new Set(filteredQuestions.map(q => q.pillar)));
+    const pillars = new Map<string, string>();
+    filteredQuestions.forEach(q => {
+      pillars.set(q.pillar_code, q.pillar_name);
+    });
+    return Array.from(pillars.entries()).map(([code, name]) => ({ code, name }));
   }, [filteredQuestions]);
 
-  const sections = ['profile', ...activePillars, 'review'];
+  const sections = ['profile', ...activePillars.map(p => p.code), 'review'];
   const currentSection = sections[currentSectionIndex];
 
-  // Group current pillar's questions
+  // Group current pillar's questions by sub-pillar
   const currentPillarQuestions = useMemo(() => {
     if (currentSection === 'profile' || currentSection === 'review') return {};
 
-    const qs = filteredQuestions.filter(q => q.pillar === currentSection);
+    const qs = filteredQuestions.filter(q => q.pillar_code === currentSection);
     return qs.reduce((acc, q) => {
-      if (!acc[q.subpillar]) acc[q.subpillar] = [];
-      acc[q.subpillar].push(q);
+      if (!acc[q.subpillar_name]) acc[q.subpillar_name] = [];
+      acc[q.subpillar_name].push(q);
       return acc;
-    }, {} as Record<string, typeof questions[0][]>);
+    }, {} as Record<string, FrameworkQuestion[]>);
   }, [currentSection, filteredQuestions]);
 
   // Validation
-  const isDetailsComplete = Boolean(details.respondent_name && details.email && details.organization && details.stakeholder_type);
+  const isProfileComplete = Boolean(
+    details.organization_name && 
+    details.organization_type && 
+    details.role_function && 
+    (survey_type === 'stakeholder' ? details.stakeholder_category : true)
+  );
+
   const totalQuestions = filteredQuestions.length;
   const answeredCount = Object.keys(responses).length;
   const isAllAnswered = totalQuestions > 0 && answeredCount === totalQuestions;
-  const isComplete = isAllAnswered && isDetailsComplete && hasConsented;
+  const isComplete = isAllAnswered && isProfileComplete && hasConsented;
 
   const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
   // Handlers
-  const handleOptionChange = (questionId: number, value: string) => {
-    setResponses(prev => ({ ...prev, [questionId]: value }));
+  const handleOptionChange = (qCode: string, score: number) => {
+    setResponses(prev => ({ ...prev, [qCode]: score }));
+  };
+
+  const handleEvidenceChange = (qCode: string, text: string) => {
+    setEvidence(prev => ({ ...prev, [qCode]: text }));
   };
 
   const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -80,7 +132,7 @@ function AssessmentFormContent() {
   };
 
   const handleNext = () => {
-    if (currentSection === 'profile' && !isDetailsComplete) return; // Prevent advancing if details missing
+    if (currentSection === 'profile' && !isProfileComplete) return;
     if (currentSectionIndex < sections.length - 1) {
       setCurrentSectionIndex(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -96,388 +148,419 @@ function AssessmentFormContent() {
 
   const handleSubmit = async () => {
     if (!isComplete) return;
-    console.log("Submitting assessment...", { details, answers: Object.keys(responses).length, mode });
     setIsSubmitting(true);
 
-    // Safety timeout: If Supabase hangs for more than 15s, throw an error
-    const timeout = setTimeout(() => {
-      alert("Submission timed out. This may be due to a poor connection or database RLS policies. Please check your data or try again.");
-      setIsSubmitting(false);
-    }, 15000);
-
     try {
-      const { data: assessment, error: assessmentError } = await supabase
-        .from('assessments')
+      // 1. Create Assessment Session
+      const { data: session, error: sessionError } = await supabase
+        .from('assessment_sessions')
         .insert([{
-          respondent_name: details.respondent_name,
-          email: details.email,
-          phone: details.phone,
-          organization: details.organization,
-          stakeholder_type: details.stakeholder_type,
-          environment_mode: mode
+          country: details.country,
+          survey_type: survey_type,
+          organization_name: details.organization_name,
+          organization_type: details.organization_type,
+          role_function: details.role_function,
+          stakeholder_category: details.stakeholder_category || null,
+          environment_mode: mode,
+          rubric_version: '3.0',
+          status: 'submitted'
         }])
         .select()
         .single();
 
-      if (assessmentError || !assessment) {
-        clearTimeout(timeout);
-        console.error("Profile storage error:", assessmentError);
-        alert(`Could not save profile: ${assessmentError?.message || 'Unknown error'}. This is often caused by Supabase RLS policies blocking public inserts.`);
-        setIsSubmitting(false);
-        return;
-      }
+      if (sessionError || !session) throw sessionError || new Error("Failed to create session");
 
-      console.log("Profile saved, ID:", assessment.id);
-
-      const responseInserts = Object.entries(responses).map(([qId, val]) => ({
-        assessment_id: assessment.id,
-        question_id: parseInt(qId),
-        response_value: val,
+      // 2. Insert Responses
+      const responseInserts = filteredQuestions.map(q => ({
+        assessment_id: session.id,
+        q_code: q.q_code,
+        pillar_code: q.pillar_code,
+        subpillar_code: q.subpillar_code,
+        score: responses[q.q_code],
+        evidence_comment: evidence[q.q_code] || null
       }));
 
       const { error: responsesError } = await supabase
-        .from('responses')
+        .from('assessment_responses')
         .insert(responseInserts);
 
-      clearTimeout(timeout);
+      if (responsesError) throw responsesError;
 
-      if (responsesError) {
-        console.error("Answers storage error:", responsesError);
-        alert(`Profile saved but answers failed: ${responsesError.message}. Accessing the dashboard might show your profile without scores.`);
-        // We still redirect because partial success is better than no feedback
-      }
-
-      console.log("Redirecting to thank you...");
+      // Clear progress
+      localStorage.removeItem(`assessment_progress_${survey_type}`);
+      
+      // Redirect
       window.location.href = '/thank-you';
-    } catch (err: any) {
-      clearTimeout(timeout);
-      console.error("Submission crash:", err);
-      alert(`Fatal Submission Error: ${err.message || 'Check console for details'}`);
+    } catch (err: unknown) {
+      console.error("Submission error:", err);
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      alert(`Error submitting assessment: ${message}`);
       setIsSubmitting(false);
     }
   };
 
+  if (!isStarted) return null;
+
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8">
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-        {/* SIDEBAR */}
-        <div className="hidden lg:block lg:col-span-1">
-          <div className="sticky top-8 space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Digital ID Governance Assessment</h2>
-
-            <div className="space-y-4 pt-2">
-              <div className="mb-2">
-                <div className="flex justify-between text-sm font-medium mb-1">
-                  <span className="text-slate-500">Overall Progress</span>
-                  <span className="text-blue-600">{Math.round(progress)}%</span>
-                </div>
-                <Progress value={progress} className="h-2 rounded-full" />
-                <p className="text-xs text-slate-400 mt-2">{answeredCount} of {totalQuestions} questions answered</p>
+    <div className="min-h-screen bg-bg-secondary text-text-primary py-12 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        {/* Sidebar Navigation */}
+        <aside className="lg:col-span-1 space-y-6">
+          <div className="sticky top-8 space-y-8 p-8 rounded-[2rem] bg-bg-primary border border-border-muted shadow-panel">
+            <div>
+              <h2 className="text-sm font-bold text-bbb-blue uppercase tracking-widest mb-6">
+                Assessment Status
+              </h2>
+              <Progress value={progress} className="h-1.5 bg-bg-secondary" />
+              <div className="flex justify-between mt-3 text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+                <span>{answeredCount} / {totalQuestions} Indicators</span>
+                <span>{Math.round(progress)}% Complete</span>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-1 mt-6">
-                {sections.map((sec, idx) => {
-                  const isActive = idx === currentSectionIndex;
+            <nav className="space-y-1.5">
+              {sections.map((sec, idx) => {
+                const isActive = idx === currentSectionIndex;
+                let isCompleted = false;
+                let label = "";
+                let icon = <FileCheck2 className="w-4 h-4" />;
 
-                  // Granular completion for pillars
-                  let isCompleted = false;
-                  let answeredInSec = 0;
-                  let totalInSec = 0;
+                if (sec === 'profile') {
+                  isCompleted = isProfileComplete;
+                  label = "Org Profile";
+                  icon = <Building2 className="w-4 h-4" />;
+                } else if (sec === 'review') {
+                  isCompleted = isAllAnswered && hasConsented;
+                  label = "Finalize";
+                  icon = <Send className="w-4 h-4" />;
+                } else {
+                  const p = activePillars.find(ap => ap.code === sec);
+                  label = p?.name || sec;
+                  const pillarQs = filteredQuestions.filter(q => q.pillar_code === sec);
+                  const answeredInSec = pillarQs.filter(q => responses[q.q_code]).length;
+                  isCompleted = pillarQs.length > 0 && answeredInSec === pillarQs.length;
+                }
 
-                  if (sec === 'profile') {
-                    isCompleted = isDetailsComplete;
-                  } else if (sec === 'review') {
-                    isCompleted = isAllAnswered && hasConsented;
-                  } else {
-                    const pillarQuestions = filteredQuestions.filter(q => q.pillar === sec);
-                    totalInSec = pillarQuestions.length;
-                    answeredInSec = pillarQuestions.filter(q => responses[q.id]).length;
-                    // Only complete if we have questions AND all are answered
-                    isCompleted = totalInSec > 0 && answeredInSec === totalInSec;
-                  }
+                return (
+                  <button
+                    key={sec}
+                    onClick={() => {
+                      if (sec !== 'profile' && !isProfileComplete) return;
+                      setCurrentSectionIndex(idx);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all ${
+                      isActive 
+                        ? 'bg-bbb-blue-muted text-bbb-blue border border-bbb-blue/10' 
+                        : 'text-text-tertiary hover:text-text-primary hover:bg-bg-secondary border border-transparent'
+                    }`}
+                  >
+                    <div className={`p-1.5 rounded-lg ${
+                      isCompleted && !isActive ? 'bg-success-muted text-success' : 
+                      isActive ? 'bg-bbb-blue text-white shadow-sm' : 'bg-bg-secondary'
+                    }`}>
+                      {isCompleted && !isActive ? <CheckCircle2 className="w-4 h-4" /> : icon}
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] truncate text-left">{label}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-                  const getIcon = () => {
-                    if (sec === 'profile') return <User className="w-4 h-4" />;
-                    if (sec === 'review') return <Send className="w-4 h-4" />;
-                    return <FileCheck2 className="w-4 h-4" />;
-                  }
+            <div className="pt-6 border-t border-border-muted">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-text-tertiary uppercase tracking-widest">
+                <div className={`w-2 h-2 rounded-full ${mode === 'live' ? 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.3)]' : 'bg-warning'}`} />
+                {mode} Environment
+              </div>
+            </div>
+          </div>
+        </aside>
 
-                  const label = sec === 'profile' ? "Respondent Profile" : sec === 'review' ? "Review & Submit" : sec;
+        {/* Main Content Area */}
+        <main className="lg:col-span-3">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSection}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-8"
+            >
+              {/* Profile Section */}
+              {currentSection === 'profile' && (
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <h1 className="text-4xl font-bold text-text-primary font-display">Organizational Context</h1>
+                    <p className="text-text-secondary text-lg">Help us understand the framework of your evaluation. This data is strictly non-PII.</p>
+                  </div>
 
-                  return (
-                    <button
-                      key={sec}
-                      onClick={() => {
-                        if (sec !== 'profile' && !isDetailsComplete) return;
-                        setCurrentSectionIndex(idx);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      className={`flex flex-col gap-1 w-full text-left p-3 rounded-xl transition-all duration-200 ease-in-out ${isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' :
-                        'text-slate-600 hover:bg-slate-100 cursor-pointer'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-md ${isActive ? 'bg-white/20' : isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100'}`}>
-                          {isCompleted && !isActive ? <CheckCircle2 className="w-4 h-4" /> : getIcon()}
+                  <Card className="bg-bg-primary border-border-muted rounded-[2rem] shadow-panel overflow-hidden border-2">
+                    <CardContent className="p-10 space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Organization Name <span className="text-bbb-blue">*</span></label>
+                          <input 
+                            type="text" 
+                            name="organization_name" 
+                            value={details.organization_name} 
+                            onChange={handleDetailsChange}
+                            placeholder="e.g. Ministry of Industry"
+                            className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all placeholder:text-text-tertiary/50"
+                          />
                         </div>
-                        <span className="font-bold text-xs uppercase tracking-wider truncate flex-1">{label}</span>
+                        <div className="space-y-3">
+                          <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Organization Type <span className="text-bbb-blue">*</span></label>
+                          <select 
+                            name="organization_type" 
+                            value={details.organization_type} 
+                            onChange={handleDetailsChange}
+                            className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all"
+                          >
+                            <option value="">Select Type</option>
+                            <option value="Government">Government</option>
+                            <option value="Private Sector">Private Sector</option>
+                            <option value="Civil Society">Civil Society</option>
+                            <option value="International Org">International Org</option>
+                            <option value="Academic">Academic</option>
+                          </select>
+                        </div>
+                        <div className="space-y-3">
+                          <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Your Role / Function <span className="text-bbb-blue">*</span></label>
+                          <input 
+                            type="text" 
+                            name="role_function" 
+                            value={details.role_function} 
+                            onChange={handleDetailsChange}
+                            placeholder="e.g. Policy Advisor"
+                            className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all placeholder:text-text-tertiary/50"
+                          />
+                        </div>
+                        {survey_type === 'stakeholder' && (
+                          <div className="space-y-3">
+                            <label className="text-label text-text-tertiary uppercase tracking-widest ml-1">Stakeholder Category <span className="text-bbb-blue">*</span></label>
+                            <select 
+                              name="stakeholder_category" 
+                              value={details.stakeholder_category} 
+                              onChange={handleDetailsChange}
+                              className="w-full bg-bg-secondary border border-border-muted rounded-xl p-4 text-text-primary focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all"
+                            >
+                              <option value="">Select Category</option>
+                              <option value="Government">Government</option>
+                              <option value="Regulator">Regulator</option>
+                              <option value="Private Sector">Private Sector</option>
+                              <option value="Civil Society">Civil Society</option>
+                              <option value="Academia">Academia</option>
+                              <option value="Development Partner">Development Partner</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Pillar Questions */}
+              {currentSection !== 'profile' && currentSection !== 'review' && (
+                <div className="space-y-12">
+                  <div className="space-y-3 border-b border-border-muted pb-8">
+                    <h1 className="text-4xl font-bold text-text-primary font-display">
+                      {activePillars.find(p => p.code === currentSection)?.name}
+                    </h1>
+                    <p className="text-text-secondary text-lg">Evaluate implementation status using the professional maturity rubric.</p>
+                  </div>
+
+                  {Object.entries(currentPillarQuestions).map(([subpillar, qs]) => (
+                    <div key={subpillar} className="space-y-8">
+                      <div className="flex items-center gap-4">
+                        <h3 className="text-xs font-bold text-bbb-blue uppercase tracking-[0.25em] whitespace-nowrap">{subpillar}</h3>
+                        <div className="h-px w-full bg-border-muted" />
                       </div>
 
-                      {/* PILLAR PROGRESS SUB-TEXT */}
-                      {sec !== 'profile' && sec !== 'review' && totalInSec > 0 && (
-                        <div className="pl-11 pr-2 flex justify-between items-center w-full">
-                          <div className={`text-[10px] font-bold ${isActive ? 'text-blue-100' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
-                            {answeredInSec} / {totalInSec} ANSWERED
-                          </div>
-                          {!isCompleted && !isActive && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                          )}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                      <div className="space-y-8">
+                        {qs.map((q) => (
+                          <Card key={q.q_code} className="bg-bg-primary border-border-muted rounded-[2rem] overflow-hidden group hover:border-bbb-blue/30 transition-all shadow-panel hover:shadow-panel-hover">
+                            <CardContent className="p-0">
+                              <div className="p-10 space-y-8">
+                                <div className="flex gap-6">
+                                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-bbb-blue-muted text-bbb-blue flex items-center justify-center font-bold text-xs border border-bbb-blue/10">
+                                    {q.q_code.split('.').pop()}
+                                  </div>
+                                  <h4 className="text-xl font-bold text-text-primary leading-tight font-display">{q.question_text}</h4>
+                                </div>
 
-            <div className={`mt-8 p-4 rounded-xl border ${mode === 'test' ? 'bg-slate-100 border-slate-200' : 'bg-red-50 border-red-200'}`}>
-              <span className={`text-xs font-bold uppercase tracking-widest ${mode === 'test' ? 'text-slate-500' : 'text-red-600'}`}>Mode</span>
-              <p className="text-sm font-medium mt-1">{mode === 'test' ? 'Test' : 'Live'}</p>
-            </div>
+                                <div className="grid grid-cols-1 gap-4">
+                                  {q.options.map(opt => (
+                                    <button
+                                      key={opt.score}
+                                      onClick={() => handleOptionChange(q.q_code, opt.score)}
+                                      className={`p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
+                                        responses[q.q_code] === opt.score 
+                                          ? 'bg-bbb-blue/5 border-bbb-blue text-bbb-blue shadow-panel-hover' 
+                                          : 'bg-bg-secondary border-transparent text-text-secondary hover:bg-bg-surface hover:border-bbb-blue/20'
+                                      }`}
+                                    >
+                                      <div className="flex items-start gap-5">
+                                        <div className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                          responses[q.q_code] === opt.score ? 'border-bbb-blue bg-bbb-blue' : 'border-border-muted'
+                                        }`}>
+                                          {responses[q.q_code] === opt.score && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                        </div>
+                                        <div>
+                                          <div className={`font-bold text-sm mb-1 ${responses[q.q_code] === opt.score ? 'text-bbb-blue' : 'text-text-primary'}`}>
+                                            {opt.label}
+                                          </div>
+                                          <div className="text-xs opacity-70 leading-relaxed">{opt.description}</div>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
 
-          </div>
-        </div>
-
-        {/* MAIN CONTENT AREA */}
-        <div className="lg:col-span-3 space-y-6">
-
-          {/* PROFILE SECTION */}
-          {currentSection === 'profile' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-8">
-                <h1 className="text-3xl font-extrabold text-slate-900">Let's Get Started.</h1>
-                <p className="text-slate-500 mt-2 text-lg">First, tell us a bit about yourself so we can tailor the assessment to your role.</p>
-              </div>
-
-              <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-                  <CardTitle className="text-slate-800 flex items-center gap-2">
-                    <User className="w-5 h-5 text-blue-500" />
-                    Respondent Profile
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 sm:p-8 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
-                      <input type="text" name="respondent_name" value={details.respondent_name} onChange={handleDetailsChange} className="w-full border-slate-200 border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" required placeholder="Jane Doe" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Organization <span className="text-red-500">*</span></label>
-                      <input type="text" name="organization" value={details.organization} onChange={handleDetailsChange} className="w-full border-slate-200 border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" required placeholder="Ministry of Technology" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address <span className="text-red-500">*</span></label>
-                      <input type="email" name="email" value={details.email} onChange={handleDetailsChange} className="w-full border-slate-200 border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" required placeholder="jane@example.com" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone Number</label>
-                      <input type="tel" name="phone" value={details.phone} onChange={handleDetailsChange} className="w-full border-slate-200 border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="+1 (555) 000-0000" />
-                    </div>
-                    <div className="md:col-span-2 mt-2">
-                      <label className="block text-sm font-semibold text-slate-700 mb-3">Stakeholder Group <span className="text-red-500">*</span></label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {[
-                          { val: 'GOV', lbl: 'Government', desc: 'Policy, issuing, or public services' },
-                          { val: 'REG', lbl: 'Regulator', desc: 'Compliance and oversight bodies' },
-                          { val: 'PRI', lbl: 'Private Sector', desc: 'Relying parties and tech vendors' },
-                          { val: 'CIV', lbl: 'Civil Society', desc: 'NGOs, advocates, and academia' }
-                        ].map(st => (
-                          <div
-                            key={st.val}
-                            onClick={() => {
-                              if (!urlStakeholderType) setDetails(p => ({ ...p, stakeholder_type: st.val }));
-                            }}
-                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${details.stakeholder_type === st.val ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500 ring-offset-1' :
-                              urlStakeholderType ? 'border-slate-200 opacity-60 cursor-not-allowed' : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'
-                              }`}
-                          >
-                            <div className="flex items-center gap-3 mb-1">
-                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${details.stakeholder_type === st.val ? 'border-blue-600' : 'border-slate-300'}`}>
-                                {details.stakeholder_type === st.val && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                                <div className="pt-4">
+                                  <button 
+                                    onClick={() => {
+                                      const el = document.getElementById(`evidence-${q.q_code}`);
+                                      el?.classList.toggle('hidden');
+                                    }}
+                                    className="text-[10px] font-bold text-text-tertiary hover:text-bbb-blue uppercase tracking-widest flex items-center gap-2.5 transition-colors"
+                                  >
+                                    <Info className="w-3.5 h-3.5" />
+                                    {evidence[q.q_code] ? 'Edit Support Evidence' : 'Add Narrative Evidence (Optional)'}
+                                  </button>
+                                  <textarea
+                                    id={`evidence-${q.q_code}`}
+                                    value={evidence[q.q_code] || ''}
+                                    onChange={(e) => handleEvidenceChange(q.q_code, e.target.value)}
+                                    placeholder="Provide justification, policy references, or data links..."
+                                    className={`mt-5 w-full bg-bg-secondary border border-border-muted rounded-2xl p-5 text-text-primary text-sm focus:ring-2 focus:ring-bbb-blue/20 focus:border-bbb-blue outline-none transition-all resize-none placeholder:text-text-tertiary/50 ${evidence[q.q_code] ? '' : 'hidden'}`}
+                                    rows={4}
+                                  />
+                                </div>
                               </div>
-                              <span className="font-bold text-slate-800">{st.lbl} ({st.val})</span>
-                            </div>
-                            <p className="text-sm text-slate-500 pl-7">{st.desc}</p>
-                          </div>
+                            </CardContent>
+                          </Card>
                         ))}
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* PILLAR QUESTION SECTION */}
-          {currentSection !== 'profile' && currentSection !== 'review' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-              <div className="mb-6">
-                <h1 className="text-3xl font-extrabold text-slate-900 border-b border-slate-200 pb-4">{currentSection}</h1>
-                <p className="text-slate-500 mt-3 text-lg">Answer the following questions to assess the maturity of this pillar.</p>
-              </div>
-
-              {Object.entries(currentPillarQuestions).map(([subpillar, qs]) => (
-                <div key={subpillar} className="space-y-6 mb-12">
-                  <h3 className="text-xl font-bold text-slate-700 bg-slate-100 inline-block px-4 py-1.5 rounded-lg">{subpillar}</h3>
-                  <div className="grid gap-6">
-                    {qs.map((q) => (
-                      <Card key={q.id} className="border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 rounded-2xl">
-                        <CardContent className="p-0">
-                          <div className="p-6 sm:p-8 border-b border-slate-100 bg-white">
-                            <div className="flex gap-4">
-                              <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                {filteredQuestions.findIndex(fq => fq.id === q.id) + 1}
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-semibold text-slate-900 mb-2 leading-snug">{q.question}</h4>
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
-                                  {q.responseType.replace('_', ' ')}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-6 sm:p-8 bg-slate-50/50">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {q.anchors?.map(anchor => (
-                                <div
-                                  key={anchor.value}
-                                  onClick={() => handleOptionChange(q.id, anchor.value)}
-                                  className={`p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 ease-out group ${responses[q.id] === anchor.value
-                                    ? 'bg-white border-blue-500 shadow-sm ring-1 ring-blue-500 scale-[1.01]'
-                                    : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 hover:shadow-sm'
-                                    }`}
-                                >
-                                  <div className="flex gap-4">
-                                    <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${responses[q.id] === anchor.value ? 'border-blue-600 bg-white' : 'border-slate-300 bg-slate-50 group-hover:border-blue-400'}`}>
-                                      {responses[q.id] === anchor.value && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
-                                    </div>
-                                    <div>
-                                      <span className={`block font-bold mb-1 text-base ${responses[q.id] === anchor.value ? 'text-blue-900' : 'text-slate-700'}`}>{anchor.label}</span>
-                                      <span className={`block text-sm leading-relaxed ${responses[q.id] === anchor.value ? 'text-blue-700/90' : 'text-slate-500'}`}>{anchor.description}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
 
-          {/* REVIEW & SUBMIT SECTION */}
-          {currentSection === 'review' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-8 text-center max-w-2xl mx-auto">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <ShieldCheck className="w-10 h-10 text-blue-600" />
-                </div>
-                <h1 className="text-3xl font-extrabold text-slate-900 mb-4">You're Almost Done!</h1>
-                <p className="text-slate-500 text-lg">Review your progress and consent to data processing before submitting your assessment.</p>
-              </div>
-
-              <Card className="max-w-2xl mx-auto border-blue-200 shadow-lg rounded-2xl overflow-hidden border-2">
-                <CardHeader className="bg-blue-50/50 border-b border-blue-100 text-center py-8">
-                  <CardTitle className="text-2xl text-blue-900">Submission Ready</CardTitle>
-                  <p className="text-blue-700 font-medium mt-2">
-                    {isAllAnswered ? "All questions answered successfully." : `Missing responses: You have answered ${answeredCount} of ${totalQuestions} questions.`}
-                  </p>
-                </CardHeader>
-                <CardContent className="p-8 space-y-8 bg-white">
-
-                  <div className={`p-4 rounded-xl border flex items-start gap-4 transition-colors ${hasConsented ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
-                    <div className="mt-0.5">
-                      <input
-                        type="checkbox"
-                        id="consent"
-                        checked={hasConsented}
-                        onChange={(e) => setHasConsented(e.target.checked)}
-                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
+              {/* Review Section */}
+              {currentSection === 'review' && (
+                <div className="space-y-10">
+                  <div className="text-center space-y-4 py-8">
+                    <div className="w-20 h-20 bg-bbb-blue-muted rounded-[2rem] flex items-center justify-center mx-auto border border-bbb-blue/10 shadow-sm">
+                      <ShieldCheck className="w-10 h-10 text-bbb-blue" />
                     </div>
-                    <label htmlFor="consent" className="text-sm text-slate-700 cursor-pointer select-none leading-relaxed">
-                      <span className="font-bold text-slate-900 block mb-1">Data Privacy Consent</span>
-                      I agree that my responses will be securely stored and aggregated for the purpose of the Barbados Digital ID Governance Assessment framework analysis. I understand my personal data will be handled securely.
-                    </label>
+                    <h1 className="text-4xl font-bold text-text-primary font-display">Validation & Submission</h1>
+                    <p className="text-text-secondary text-lg max-w-2xl mx-auto leading-relaxed">
+                      Please confirm that all indicators have been evaluated according to the professional maturity rubric.
+                    </p>
                   </div>
 
-                  {!isComplete && (
-                    <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm font-medium flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      Please complete all profile details, answer all questions, and provide consent to submit.
-                    </div>
-                  )}
+                  <Card className="bg-bg-primary border-border-muted rounded-[2.5rem] shadow-panel border-2 max-w-2xl mx-auto overflow-hidden">
+                    <CardContent className="p-10 space-y-10">
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-text-tertiary">
+                          <span>Institutional Indicators</span>
+                          <span className="text-text-primary">{answeredCount} / {totalQuestions}</span>
+                        </div>
+                        <Progress value={progress} className="h-1.5 bg-bg-secondary" />
+                        {!isAllAnswered && (
+                           <div className="flex items-center gap-2.5 text-warning text-[10px] font-bold uppercase tracking-widest justify-center bg-warning/5 p-3 rounded-xl border border-warning/10">
+                            <Info className="w-4 h-4" />
+                            {totalQuestions - answeredCount} indicators require evaluation
+                          </div>
+                        )}
+                      </div>
 
+                      <div className={`p-8 rounded-3xl border-2 transition-all duration-300 ${
+                        hasConsented ? 'bg-bbb-blue-muted border-bbb-blue/20' : 'bg-bg-secondary border-border-muted'
+                      }`}>
+                        <div className="flex items-start gap-5">
+                          <div className="relative flex items-center">
+                            <input 
+                              type="checkbox" 
+                              id="consent"
+                              checked={hasConsented}
+                              onChange={(e) => setHasConsented(e.target.checked)}
+                              className="w-6 h-6 rounded-lg border-border-muted bg-white text-bbb-blue focus:ring-bbb-blue cursor-pointer"
+                            />
+                          </div>
+                          <label htmlFor="consent" className="text-sm text-text-secondary leading-relaxed cursor-pointer select-none">
+                            <span className="text-text-primary font-bold block mb-1 text-base">Methodology Attestation</span>
+                            I certify that these responses represent an accurate assessment of Barbados&apos; Digital ID governance maturity as of {new Date().toLocaleDateString()}.
+                            <span className="block mt-4 text-bbb-blue font-bold text-[10px] uppercase tracking-[0.15em] flex items-center gap-2">
+                              <Lock className="w-4 h-4" /> Strictly Anonymized Analysis
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={handleSubmit}
+                        disabled={!isComplete || isSubmitting}
+                        className="btn-primary w-full h-16 text-lg flex items-center justify-center gap-4 disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            Finalizing...
+                          </>
+                        ) : (
+                          "Submit Institutional Assessment"
+                        )}
+                      </button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Navigation Controls */}
+              <div className="flex justify-between items-center py-12 border-t border-border-muted">
+                <Button
+                  variant="ghost"
+                  onClick={handlePrev}
+                  disabled={currentSectionIndex === 0}
+                  className="px-10 h-14 text-text-tertiary hover:text-text-primary hover:bg-bg-secondary rounded-xl font-bold uppercase tracking-widest text-[10px]"
+                >
+                  <ChevronLeft className="w-5 h-5 mr-3" /> Previous Section
+                </Button>
+
+                {currentSection !== 'review' && (
                   <Button
-                    onClick={handleSubmit}
-                    disabled={!isComplete || isSubmitting}
-                    size="lg"
-                    className="w-full h-14 text-lg font-bold rounded-xl shadow-md bg-blue-600 hover:bg-blue-700 transition-all hover:shadow-lg disabled:opacity-50 disabled:shadow-none"
+                    onClick={handleNext}
+                    disabled={currentSection === 'profile' && !isProfileComplete}
+                    className="btn-primary px-12 h-14"
                   >
-                    {isSubmitting ? "Submitting securely..." : "Submit Assessment"}
+                    Continue <ChevronRight className="w-5 h-5 ml-3" />
                   </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* GLOBAL NEXT / PREV NAVIGATION BUTTONS */}
-          <div className="flex justify-between items-center mt-12 py-6 border-t border-slate-200">
-            <Button
-              variant="outline"
-              onClick={handlePrev}
-              disabled={currentSectionIndex === 0}
-              className="h-12 px-6 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
-            >
-              <ChevronLeft className="w-5 h-5 mr-2" /> Previous
-            </Button>
-
-            {currentSection !== 'review' && (
-              <Button
-                onClick={handleNext}
-                disabled={currentSection === 'profile' && !isDetailsComplete}
-                className="h-12 px-8 rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-md font-semibold"
-              >
-                Continue <ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-            )}
-          </div>
-
-        </div>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );
 }
 
-export default function AssessmentForm() {
+export default function AssessmentForm(props: AssessmentFormProps) {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-500 font-medium">
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          Loading Assessment Framework...
+      <div className="min-h-screen bg-bg-secondary flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-bbb-blue" />
+          <span className="font-sans text-[0.6875rem] font-semibold text-text-tertiary uppercase tracking-widest">Loading Framework</span>
         </div>
       </div>
     }>
-      <AssessmentFormContent />
+      <AssessmentFormContent {...props} />
     </Suspense>
   );
 }

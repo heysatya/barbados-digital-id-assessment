@@ -1,137 +1,143 @@
 import { describe, it, expect } from 'vitest';
-import { mapResponseToScore, getMaturityLevel, calculateScores, calculateAggregatedScores } from './scoring';
-import { questions } from '../data/questions';
+import { 
+  scoreAssessment, 
+  mapMaturityV3 
+} from './scoring';
+import { DigitalIDAssessmentInput } from '@/types/scoring';
 
-describe('Scoring Engine: mapResponseToScore', () => {
-    it('maps v2 numeric strings correctly (0-4)', () => {
-        expect(mapResponseToScore('likert', '0')).toBe(0);
-        expect(mapResponseToScore('likert', '2')).toBe(2);
-        expect(mapResponseToScore('likert', '4')).toBe(4);
-    });
+describe('Scoring Engine v3.0: Maturity Mapping', () => {
+  it('maps scores to correct maturity labels and colors', () => {
+    // Basic: 1.00 - 1.80
+    expect(mapMaturityV3(1.00)).toEqual({ maturity: 'Basic', color: '#C00000' });
+    expect(mapMaturityV3(1.80)).toEqual({ maturity: 'Basic', color: '#C00000' });
+    
+    // Opportunistic: 1.81 - 2.60
+    expect(mapMaturityV3(1.81)).toEqual({ maturity: 'Opportunistic', color: '#FFC000' });
+    expect(mapMaturityV3(2.60)).toEqual({ maturity: 'Opportunistic', color: '#FFC000' });
+    
+    // Systematic: 2.61 - 3.40
+    expect(mapMaturityV3(2.61)).toEqual({ maturity: 'Systematic', color: '#FFFF00' });
+    expect(mapMaturityV3(3.40)).toEqual({ maturity: 'Systematic', color: '#FFFF00' });
+    
+    // Differentiating: 3.41 - 4.20
+    expect(mapMaturityV3(3.41)).toEqual({ maturity: 'Differentiating', color: '#92D050' });
+    expect(mapMaturityV3(4.20)).toEqual({ maturity: 'Differentiating', color: '#92D050' });
+    
+    // Transformational: 4.21 - 5.00
+    expect(mapMaturityV3(4.21)).toEqual({ maturity: 'Transformational', color: '#00B050' });
+    expect(mapMaturityV3(5.00)).toEqual({ maturity: 'Transformational', color: '#00B050' });
+  });
 
-    it('handles "not_sure" as 0', () => {
-        expect(mapResponseToScore('yes_no', 'not_sure')).toBe(0);
-    });
-
-    it('maintains backwards compatibility for v1 string values', () => {
-        expect(mapResponseToScore('yes_no', 'yes')).toBe(4);
-        expect(mapResponseToScore('yes_no', 'no')).toBe(0);
-        expect(mapResponseToScore('percentage', 'lt25')).toBe(1);
-        expect(mapResponseToScore('percentage', 'gt75')).toBe(4);
-    });
-
-    it('falls back to 0 for malformed input', () => {
-        expect(mapResponseToScore('likert', 'invalid')).toBe(0);
-        expect(mapResponseToScore('likert', '')).toBe(0);
-    });
+  it('handles rounding correctly at boundaries', () => {
+    expect(mapMaturityV3(1.804)).toEqual({ maturity: 'Basic', color: '#C00000' });
+    expect(mapMaturityV3(1.805)).toEqual({ maturity: 'Opportunistic', color: '#FFC000' });
+  });
 });
 
-describe('Scoring Engine: getMaturityLevel (Boundaries)', () => {
-    it('identifies Basic correctly (<= 1)', () => {
-        expect(getMaturityLevel(0.5)).toBe('Basic');
-        expect(getMaturityLevel(1.0)).toBe('Basic');
-    });
+describe('Scoring Engine v3.0: Unified Weight Pool Aggregation', () => {
+  const mockInput: DigitalIDAssessmentInput = {
+    assessment_id: 'test-uuid',
+    country: 'Barbados',
+    survey_responses: [
+      {
+        q_code: 'P1.1.NE.Q1',
+        subpillar_code: 'P1.1',
+        pillar_code: 'P1',
+        response_counts: { r5: 2, r4: 3, r3: 1 } // (2*5 + 3*4 + 1*3)/6 = 25/6 = 4.167
+      },
+      {
+        q_code: 'P1.1.NE.Q2',
+        subpillar_code: 'P1.1',
+        pillar_code: 'P1',
+        response_counts: { r4: 2, r3: 2 } // (2*4 + 2*3)/4 = 14/4 = 3.5
+      }
+    ],
+    expert_responses: [
+      { q_code: 'P1.1.EX.Q1', subpillar_code: 'P1.1', pillar_code: 'P1', score: 4 },
+      { q_code: 'P1.1.EX.Q2', subpillar_code: 'P1.1', pillar_code: 'P1', score: 3 },
+      { q_code: 'P1.1.EX.Q3', subpillar_code: 'P1.1', pillar_code: 'P1', score: 9 } // Sentinel 9 excluded
+    ],
+    indicator_values: [
+      { indicator_code: 'IND.P1.1.01', subpillar_code: 'P1.1', pillar_code: 'P1', raw_value: 72 }, // 1 + (72/100)*4 = 3.88
+      { indicator_code: 'IND.P1.1.02', subpillar_code: 'P1.1', pillar_code: 'P1', raw_value: 0.60 } // 1 + 0.60*4 = 3.4
+    ]
+  };
 
-    it('identifies Opportunistic correctly (<= 2)', () => {
-        expect(getMaturityLevel(1.1)).toBe('Opportunistic');
-        expect(getMaturityLevel(2.0)).toBe('Opportunistic');
-    });
+  it('calculates sub-pillar scores using correct weights and 1-5 scale', () => {
+    // Weights from rubric_config.json for P1.1:
+    // EX.Q1: 0.22
+    // EX.Q2: 0.1925
+    // EX.Q3: 0.1375 (excluded)
+    // NE.Q1: 0.14
+    // NE.Q2: 0.1225
+    // NE.Q3: 0.0875 (missing)
+    // IND.01: 0.06
+    // IND.02: 0.04
+    
+    // Scores:
+    // NE.Q1: 4.1666...
+    // NE.Q2: 3.5
+    // EX.Q1: 4.0
+    // EX.Q2: 3.0
+    // IND.01: 3.88
+    // IND.02: 3.4
+    
+    // sumWeighted = (4.1666 * 0.14) + (3.5 * 0.1225) + (4.0 * 0.22) + (3.0 * 0.1925) + (3.88 * 0.06) + (3.4 * 0.04)
+    // sumWeighted = 0.5833 + 0.42875 + 0.88 + 0.5775 + 0.2328 + 0.136 = 2.83835
+    
+    // sumValidWeights = 0.14 + 0.1225 + 0.22 + 0.1925 + 0.06 + 0.04 = 0.775
+    
+    // score = 2.83835 / 0.775 = 3.662...
+    
+    const output = scoreAssessment(mockInput);
+    const spP11 = output.subpillars.find(s => s.code === 'P1.1');
+    
+    expect(spP11?.score).toBeCloseTo(3.66, 1);
+    expect(spP11?.maturity).toBe('Differentiating');
+  });
 
-    it('identifies Systematic correctly (<= 3)', () => {
-        expect(getMaturityLevel(2.1)).toBe('Systematic');
-        expect(getMaturityLevel(3.0)).toBe('Systematic');
-    });
+  it('verifies no triangulation bonus is applied', () => {
+    // Even if 3+ stakeholders responded, the score should strictly follow weighted average
+    const output = scoreAssessment(mockInput);
+    const spP11 = output.subpillars.find(s => s.code === 'P1.1');
+    
+    // If triangulation (5% bonus) was applied, it would be around 3.84
+    expect(spP11?.score).toBeLessThan(3.8);
+  });
 
-    it('identifies Differentiating correctly (<= 3.5)', () => {
-        expect(getMaturityLevel(3.1)).toBe('Differentiating');
-        expect(getMaturityLevel(3.5)).toBe('Differentiating');
-    });
+  it('correctly handles sentinel 9 (I don\'t know) by excluding it from weights', () => {
+    const output = scoreAssessment(mockInput);
 
-    it('identifies Transformative correctly (> 3.5)', () => {
-        expect(getMaturityLevel(3.6)).toBe('Transformative');
-        expect(getMaturityLevel(4.0)).toBe('Transformative');
-    });
+    
+    // Check validation log for sentinel exclusion
+    const sentinelLog = output.metadata.validation_log.find(l => l.item === 'P1.1.EX.Q3');
+    expect(sentinelLog?.action).toBe('excluded_sentinel');
+  });
 });
 
-describe('Scoring Engine: Individual calculation stability', () => {
-    it('handles zero questions answered without crashing (no division by zero)', () => {
-        const emptyResponses = {};
-        const result = calculateScores(emptyResponses);
-        expect(result.overallScore).toBe(0);
-        expect(result.pillarBreakdown.length).toBe(0);
-    });
+describe('Scoring Engine v3.0: Weight Redistribution', () => {
+  it('proportionally redistributes weight when data is missing', () => {
+    const partialInput: DigitalIDAssessmentInput = {
+      assessment_id: 'partial-uuid',
+      country: 'Barbados',
+      survey_responses: [
+        {
+          q_code: 'P1.1.NE.Q1',
+          subpillar_code: 'P1.1',
+          pillar_code: 'P1',
+          response_counts: { r4: 10 } // Score 4.0, Weight 0.14
+        }
+      ],
+      expert_responses: [], // All expert missing (Weight 0.55)
+      indicator_values: [] // All indicator missing (Weight 0.10)
+    };
 
-    it('calculates perfect score (4.0) correctly', () => {
-        // Mock all questions as answered with '4'
-        const perfectResponses: Record<number, string> = {};
-        questions.forEach(q => perfectResponses[q.id] = '4');
-        
-        const result = calculateScores(perfectResponses);
-        expect(result.overallScore).toBe(4.0);
-        expect(result.maturityLevel).toBe('Transformative');
-    });
-});
-
-describe('Scoring Engine: Aggregated calculation & Triangulation', () => {
-    it('applies 70/30 weighting between primary and secondary stakeholders', () => {
-        // Target a single question for isolation testing if possible, 
-        // but since calculateAggregatedScores loops through all 'questions', 
-        // we'll mock a simple scenario with one question's worth of data.
-        
-        const targetQ = questions[0];
-        const mockAssessments = [
-            { id: '1', stakeholder_type: targetQ.primaryStakeholder },
-            { id: '2', stakeholder_type: targetQ.secondaryStakeholder }
-        ];
-        
-        const mockResponses = [
-            { assessment_id: '1', question_id: targetQ.id, response_value: '4' }, // Primary = 4
-            { assessment_id: '2', question_id: targetQ.id, response_value: '0' }  // Secondary = 0
-        ];
-
-        const result = calculateAggregatedScores(mockResponses, mockAssessments);
-        
-        // Expected: (4 * 0.7) + (0 * 0.3) = 2.8 for that question.
-        // Since it's the only question with responses, overall should be 2.8.
-        expect(result.overallScore).toBe(2.8);
-    });
-
-    it('applies the 5% Triangulation Bonus when 3+ different stakeholders respond', () => {
-        const targetQ = questions[2]; // Using index 2 to avoid pillar conflicts if specific
-        const mockAssessments = [
-            { id: '1', stakeholder_type: targetQ.primaryStakeholder },
-            { id: '2', stakeholder_type: targetQ.secondaryStakeholder },
-            { id: '3', stakeholder_type: 'OTHER' } // 3rd stakeholder
-        ];
-        
-        const mockResponses = [
-            { assessment_id: '1', question_id: targetQ.id, response_value: '2' }, // Primary
-            { assessment_id: '2', question_id: targetQ.id, response_value: '2' }, // Secondary
-            { assessment_id: '3', question_id: targetQ.id, response_value: '2' }  // Other
-        ];
-
-        // Base score = 2.0 (weighted average of 2 and 2 is 2).
-        // Bonus = 2.0 * 1.05 = 2.10
-        const result = calculateAggregatedScores(mockResponses, mockAssessments);
-        expect(result.overallScore).toBe(2.1);
-    });
-
-    it('caps final question score at 4.0 even after triangulation bonus', () => {
-        const targetQ = questions[5];
-        const mockAssessments = [
-            { id: '1', stakeholder_type: targetQ.primaryStakeholder },
-            { id: '2', stakeholder_type: targetQ.secondaryStakeholder },
-            { id: '3', stakeholder_type: 'RANDOM' }
-        ];
-        
-        const mockResponses = [
-            { assessment_id: '1', question_id: targetQ.id, response_value: '4' },
-            { assessment_id: '2', question_id: targetQ.id, response_value: '4' },
-            { assessment_id: '3', question_id: targetQ.id, response_value: '4' }
-        ];
-
-        // Base = 4.0. Bonus 5% = 4.2. Must be capped at 4.0.
-        const result = calculateAggregatedScores(mockResponses, mockAssessments);
-        expect(result.overallScore).toBe(4.0);
-    });
+    const output = scoreAssessment(partialInput);
+    const spP11 = output.subpillars.find(s => s.code === 'P1.1');
+    
+    // Only one question valid. sumWeighted = 4.0 * 0.14. sumValidWeights = 0.14.
+    // Result = (4.0 * 0.14) / 0.14 = 4.0
+    expect(spP11?.score).toBe(4.0);
+    expect(spP11?.data_quality_flag).toBe('⚠️ Partial');
+  });
 });
