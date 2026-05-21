@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, ShieldAlert, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Activity, Link as LinkIcon, Calendar, Layers, Settings2 } from 'lucide-react';
+import { Database, ShieldAlert, Save, Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Activity, Link as LinkIcon, Calendar, Layers, Settings2, Eye } from 'lucide-react';
 
 interface IndicatorRegistryItem {
   code: string;
@@ -57,11 +57,13 @@ const SCORE_COLOR = (score: number) => {
 const IndicatorRow = ({
   indicator,
   dbValue,
-  onChange
+  onChange,
+  readOnly = false
 }: {
   indicator: IndicatorRegistryItem;
   dbValue: IndicatorDBValue | undefined;
-  onChange: (val: number | null, meta: { year?: string; link?: string; normalization?: string }, maxVal: number) => void
+  onChange: (val: number | null, meta: { year?: string; link?: string; normalization?: string }, maxVal: number) => void;
+  readOnly?: boolean;
 }) => {
   const [localVal, setLocalVal] = useState<string>(dbValue?.raw_value !== null && dbValue?.raw_value !== undefined ? String(dbValue.raw_value) : '');
   const [localMeta, setLocalMeta] = useState<{ year?: string, link?: string, normalization?: string }>(dbValue?.metadata || {});
@@ -162,7 +164,8 @@ const IndicatorRow = ({
             <select
               value={localRule}
               onChange={(e) => handleRuleChange(e.target.value)}
-              className="text-[10px] font-bold text-[#0D1117] bg-white border border-[#DDE1E9] rounded px-2 py-1 outline-none focus:border-[#003DA5] cursor-pointer shadow-sm"
+              disabled={readOnly}
+              className={`text-[10px] font-bold text-[#0D1117] bg-white border border-[#DDE1E9] rounded px-2 py-1 outline-none focus:border-[#003DA5] shadow-sm ${readOnly ? 'cursor-not-allowed bg-gray-50' : 'cursor-pointer'}`}
             >
               <option value="pct_to_5">Percentage Scale (0-100)</option>
               <option value="index_to_5">Index Scale (0.0 - 1.0)</option>
@@ -193,11 +196,11 @@ const IndicatorRow = ({
               <div className="bg-[#F8F9FB] p-4 rounded-xl border border-[#DDE1E9] flex gap-4 max-w-2xl">
                 <div className="w-32">
                   <label className="text-[9px] font-black text-[#8A95A3] uppercase tracking-widest mb-1.5 flex items-center gap-1"><Calendar className="w-3 h-3" /> Year</label>
-                  <input type="text" maxLength={4} placeholder="e.g. 2024" value={localMeta.year || ''} onChange={(e) => updateMeta('year', e.target.value)} onBlur={handleBlur} className="w-full bg-white border border-[#DDE1E9] rounded-lg px-3 py-2 text-xs font-bold text-[#0D1117] outline-none focus:border-[#003DA5]" />
+                  <input type="text" disabled={readOnly} maxLength={4} placeholder="e.g. 2024" value={localMeta.year || ''} onChange={(e) => updateMeta('year', e.target.value)} onBlur={handleBlur} className={`w-full bg-white border border-[#DDE1E9] rounded-lg px-3 py-2 text-xs font-bold text-[#0D1117] outline-none focus:border-[#003DA5] ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`} />
                 </div>
                 <div className="flex-1">
                   <label className="text-[9px] font-black text-[#8A95A3] uppercase tracking-widest mb-1.5 flex items-center gap-1"><LinkIcon className="w-3 h-3" /> Source</label>
-                  <input type="text" maxLength={500} placeholder="URL or Document Name..." value={localMeta.link || ''} onChange={(e) => updateMeta('link', e.target.value)} onBlur={handleBlur} className="w-full bg-white border border-[#DDE1E9] rounded-lg px-3 py-2 text-xs font-medium text-[#0D1117] outline-none focus:border-[#003DA5]" />
+                  <input type="text" disabled={readOnly} maxLength={500} placeholder="URL or Document Name..." value={localMeta.link || ''} onChange={(e) => updateMeta('link', e.target.value)} onBlur={handleBlur} className={`w-full bg-white border border-[#DDE1E9] rounded-lg px-3 py-2 text-xs font-medium text-[#0D1117] outline-none focus:border-[#003DA5] ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`} />
                 </div>
               </div>
             </motion.div>
@@ -210,14 +213,14 @@ const IndicatorRow = ({
         <div className="flex flex-col items-end min-w-[160px]">
           {isBinary ? (
             <div className="flex items-center p-1 bg-[#F8F9FB] border border-[#DDE1E9] rounded-xl shadow-sm">
-              <button onClick={() => handleQualitative(100)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${localVal === '100' ? 'bg-[#00B050] text-white shadow-md' : 'text-[#8A95A3] hover:text-[#4A5568]'}`}>Yes</button>
-              <button onClick={() => handleQualitative(0)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${localVal === '0' ? 'bg-[#C00000] text-white shadow-md' : 'text-[#8A95A3] hover:text-[#4A5568]'}`}>No</button>
-              <button onClick={() => handleQualitative(null)} className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${localVal === '' ? 'bg-[#E2E8F0] text-[#4A5568] shadow-inner' : 'text-[#8A95A3] hover:text-[#4A5568]'}`}>N/A</button>
+              <button disabled={readOnly} onClick={() => handleQualitative(100)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${localVal === '100' ? 'bg-[#00B050] text-white shadow-md' : 'text-[#8A95A3] hover:text-[#4A5568]'} ${readOnly ? 'cursor-not-allowed opacity-80' : ''}`}>Yes</button>
+              <button disabled={readOnly} onClick={() => handleQualitative(0)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${localVal === '0' ? 'bg-[#C00000] text-white shadow-md' : 'text-[#8A95A3] hover:text-[#4A5568]'} ${readOnly ? 'cursor-not-allowed opacity-80' : ''}`}>No</button>
+              <button disabled={readOnly} onClick={() => handleQualitative(null)} className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${localVal === '' ? 'bg-[#E2E8F0] text-[#4A5568] shadow-inner' : 'text-[#8A95A3] hover:text-[#4A5568]'} ${readOnly ? 'cursor-not-allowed opacity-80' : ''}`}>N/A</button>
             </div>
           ) : (
             <>
               <div className={`relative flex items-center bg-[#F8F9FB] border ${hasError ? 'border-red-400 ring-1 ring-red-400' : isFocused ? 'border-[#003DA5] ring-1 ring-[#003DA5]' : 'border-[#DDE1E9] hover:border-[#A0AEC0]'} rounded-xl overflow-hidden transition-all duration-200 w-32 shadow-sm`}>
-                <input type="number" step="any" value={localVal} onChange={(e) => setLocalVal(e.target.value)} onFocus={() => setIsFocused(true)} onBlur={handleBlur} placeholder="Value..." className="w-full bg-transparent px-4 py-2.5 text-sm font-black text-[#0D1117] outline-none placeholder:font-medium placeholder:text-[#A0AEC0] text-right" />
+                <input type="number" step="any" disabled={readOnly} value={localVal} onChange={(e) => setLocalVal(e.target.value)} onFocus={() => setIsFocused(true)} onBlur={handleBlur} placeholder="Value..." className={`w-full bg-transparent px-4 py-2.5 text-sm font-black text-[#0D1117] outline-none placeholder:font-medium placeholder:text-[#A0AEC0] text-right ${readOnly ? 'cursor-not-allowed text-gray-500 bg-gray-50/50' : ''}`} />
                 {isPct && <span className="pr-4 font-black text-[#8A95A3] select-none">%</span>}
               </div>
               <div className="h-4 mt-1 flex items-center justify-end w-full pr-1">
@@ -242,7 +245,7 @@ const IndicatorRow = ({
 
 
 export default function IndicatorManagementPage() {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'viewer' | null>(null);
   const [indicators, setIndicators] = useState<IndicatorRegistryItem[]>([]);
   const [dbValues, setDbValues] = useState<Record<string, IndicatorDBValue>>({});
   const [loading, setLoading] = useState(true);
@@ -270,12 +273,19 @@ export default function IndicatorManagementPage() {
 
   useEffect(() => {
     async function checkAuthAndLoadData() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setIsAdmin(false); setLoading(false); return; }
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Session retrieval failed:', error.message);
+        await supabase.auth.signOut();
+        setUserRole(null);
+        setLoading(false);
+        return;
+      }
+      if (!session) { setUserRole(null); setLoading(false); return; }
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-      if (!profile || profile.role !== 'admin') { setIsAdmin(false); setLoading(false); return; }
+      if (!profile || !['admin', 'viewer'].includes(profile.role)) { setUserRole(null); setLoading(false); return; }
 
-      setIsAdmin(true);
+      setUserRole(profile.role as 'admin' | 'viewer');
 
       try {
         const res = await fetch('/api/indicators');
@@ -393,7 +403,7 @@ export default function IndicatorManagementPage() {
   }, [indicators]);
 
   if (loading) return <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#003DA5]" /></div>;
-  if (isAdmin === false) return <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center"><ShieldAlert className="w-12 h-12 text-red-600" /></div>;
+  if (userRole === null) return <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center"><ShieldAlert className="w-12 h-12 text-red-600" /></div>;
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] text-[#0D1117] p-6 lg:p-12 font-sans selection:bg-[#003DA5]/30">
@@ -410,7 +420,11 @@ export default function IndicatorManagementPage() {
                 <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-bold rounded-full uppercase tracking-widest flex items-center gap-1 animate-pulse"><AlertCircle className="w-3 h-3" /> Unsaved Changes</span>
               )}
             </div>
-            <p className="text-sm font-medium text-[#4A5568] max-w-xl">Input qualitative and quantitative data for Digital ID indicators.</p>
+            <p className="text-sm font-medium text-[#4A5568] max-w-xl">
+              {userRole === 'admin' 
+                ? 'Input qualitative and quantitative data for Digital ID indicators.' 
+                : 'View qualitative and quantitative data for Digital ID indicators.'}
+            </p>
             <div className="mt-8 grid grid-cols-3 gap-6 max-w-lg">
               <div><p className="text-[10px] font-black text-[#8A95A3] uppercase tracking-widest mb-1">Total Variables</p><p className="text-2xl font-black text-[#0D1117]">{healthStats.total}</p></div>
               <div><p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Populated</p><p className="text-2xl font-black text-green-700">{healthStats.populated}</p></div>
@@ -422,9 +436,15 @@ export default function IndicatorManagementPage() {
             <div className="h-3 w-full bg-[#E2E8F0] rounded-full overflow-hidden shadow-inner"><motion.div initial={{ width: 0 }} animate={{ width: `${healthStats.pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className={`h-full rounded-full ${healthStats.pct === 100 ? 'bg-[#00B050]' : 'bg-[#003DA5]'}`} /></div>
             {saveMessage === 'success' && <span className="mt-3 text-[10px] font-bold text-green-600 flex items-center gap-1 uppercase"><CheckCircle2 className="w-3 h-3" /> Registry Updated</span>}
             {saveMessage === 'error' && <span className="mt-3 text-[10px] font-bold text-red-600 flex items-center gap-1 uppercase"><ShieldAlert className="w-3 h-3" /> Save Failed</span>}
-            <button onClick={handleSaveAll} disabled={saving || !isDirty} className={`w-full mt-4 text-white px-4 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 ${isDirty ? 'bg-[#003DA5] hover:bg-[#002A7A]' : 'bg-[#0D1117] opacity-50 cursor-not-allowed'}`}>
-              {saving ? <Activity className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{saving ? 'Committing...' : isDirty ? 'Commit Changes' : 'Fully Synced'}
-            </button>
+            {userRole === 'admin' ? (
+              <button onClick={handleSaveAll} disabled={saving || !isDirty} className={`w-full mt-4 text-white px-4 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 ${isDirty ? 'bg-[#003DA5] hover:bg-[#002A7A]' : 'bg-[#0D1117] opacity-50 cursor-not-allowed'}`}>
+                {saving ? <Activity className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{saving ? 'Committing...' : isDirty ? 'Commit Changes' : 'Fully Synced'}
+              </button>
+            ) : (
+              <div className="w-full mt-4 bg-[#E2E8F0] text-[#4A5568] py-3.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 select-none shadow-sm">
+                <Eye className="w-4 h-4 text-[#4A5568]" /> Read-Only View
+              </div>
+            )}
           </div>
         </div>
 
@@ -513,6 +533,7 @@ export default function IndicatorManagementPage() {
                                         indicator={indicator}
                                         dbValue={dbValues[indicator.code]}
                                         onChange={(val, meta, max) => handleValueChange(indicator.code, val, meta, max)}
+                                        readOnly={userRole !== 'admin'}
                                       />
                                     ))}
                                   </div>

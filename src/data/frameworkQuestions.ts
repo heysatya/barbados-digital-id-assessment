@@ -58,7 +58,7 @@ export const frameworkQuestions: FrameworkQuestion[] = [
         "allow_unknown": true
     },
     {
-        "q_code": "P1.1.EX.Q3",
+        "q_code": "P1.1.EX.Q2",
         "pillar_code": "P1",
         "pillar_name": "Service Delivery & User Value",
         "subpillar_code": "P1.1",
@@ -4600,7 +4600,7 @@ export const frameworkQuestions: FrameworkQuestion[] = [
         "subpillar_code": "P5.4",
         "subpillar_name": "Emerging Tech Safeguards",
         "survey_type": "stakeholder",
-        "question_text": "How well does the policy and regulatory framework support responsible innovation and risk management for AI-enabled identity servicesAre there binding rules to assess and manage risks from AI and automated decision-making in ID systems?",
+        "question_text": "How well does the policy and regulatory framework support responsible innovation and risk management for AI-enabled identity services. Are there binding rules to assess and manage risks from AI and automated decision-making in ID systems?",
         "options": [
             {
                 "score": 1,

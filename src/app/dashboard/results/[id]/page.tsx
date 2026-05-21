@@ -20,7 +20,14 @@ export default function DashboardResultPage() {
 
   useEffect(() => {
     // Auth check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session retrieval failed:', error.message);
+        supabase.auth.signOut().then(() => {
+          router.push('/login');
+        });
+        return;
+      }
       if (!session) { router.push('/login'); return; }
       supabase.from('profiles').select('role').eq('id', session.user.id).single()
         .then(({ data }) => {

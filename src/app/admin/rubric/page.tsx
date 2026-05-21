@@ -12,7 +12,14 @@ export default function RubricViewerPage() {
 
     useEffect(() => {
         async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) {
+                console.error('Session retrieval failed:', error.message);
+                await supabase.auth.signOut();
+                setIsAdmin(false);
+                setLoading(false);
+                return;
+            }
             if (!session) { setIsAdmin(false); setLoading(false); return; }
 
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();

@@ -67,16 +67,23 @@ export default function DashboardPage() {
 
   // ── Auth check ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session retrieval failed:', error.message);
+        supabase.auth.signOut().then(() => {
+          setState(s => ({ ...s, loading: false }));
+        });
+        return;
+      }
       if (!session) {
         setState(s => ({ ...s, loading: false }));
         return;
       }
       // Trust the database, not a hardcoded email string
       supabase.from('profiles').select('role').eq('id', session.user.id).single()
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('Profile fetch failed:', error.message);
+        .then(({ data, error: profileError }) => {
+          if (profileError) {
+            console.error('Profile fetch failed:', profileError.message);
             setState(s => ({ ...s, loading: false, error: "Unauthorized: Profile record missing." }));
             return;
           }
