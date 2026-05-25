@@ -1,7 +1,7 @@
 {
-  "version": "1.1",
-  "description": "Digital ID Assessment Framework \u2014 Rubric Configuration v1.1. Corrected NE question counts for P3.3, P4.1-P4.5, P5.4, P5.5, P6.3, P6.4. All 30 sub-pillar weights sum to 1.000.",
-  "spec_reference": "SCORING_LOGIC_v3.0.md \u00a78",
+  "version": "1.2",
+  "description": "Digital ID Assessment Framework — Rubric Configuration v1.2. Synchronized with active questions in frameworkQuestions.ts and dynamic indicators from indicators_master.csv. All weights redistributed pro-rata and verified.",
+  "spec_reference": "SCORING_LOGIC_v3.0.md §8",
   "normalization_rules": {
     "pct_to_5": {
       "formula": "1 + (raw / 100) * 4",
@@ -35,50 +35,56 @@
       },
       "questions": {
         "P1.1.EX.Q1": {
-          "weight": 0.22,
+          "weight": 0.3025,
           "component": "expert",
           "zero_weight": false
         },
         "P1.1.EX.Q2": {
-          "weight": 0.1925,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P1.1.EX.Q3": {
-          "weight": 0.1375,
+          "weight": 0.2475,
           "component": "expert",
           "zero_weight": false
         },
         "P1.1.NE.Q1": {
-          "weight": 0.14,
+          "weight": 0.1925,
           "component": "survey",
           "zero_weight": false
         },
         "P1.1.NE.Q2": {
-          "weight": 0.1225,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P1.1.NE.Q3": {
-          "weight": 0.0875,
+          "weight": 0.1575,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P1.1.01": {
-          "weight": 0.06,
+          "weight": 0.025,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank ID4D; ITU IDI; GSMA Mobile Connectivity Index; UN EGDI/Survey",
           "normalization": "pct_to_5",
-          "description": "Mobile/digital ID enrollment rate (%)"
+          "description": "internet use"
         },
         "IND.P1.1.02": {
-          "weight": 0.04,
+          "weight": 0.025,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "index_to_5",
-          "description": "Digital inclusion index (0\u20131)"
+          "source": "World Bank ID4D; ITU IDI; GSMA Mobile Connectivity Index; UN EGDI/Survey",
+          "normalization": "pct_to_5",
+          "description": "ID coverage gaps by sex/age/income/rural where available"
+        },
+        "IND.P1.1.03": {
+          "weight": 0.025,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "World Bank ID4D; ITU IDI; GSMA Mobile Connectivity Index; UN EGDI/Survey",
+          "normalization": "pct_to_5",
+          "description": "mobile coverage; (Population coverage, by mobile network)"
+        },
+        "IND.P1.1.04": {
+          "weight": 0.025,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "World Bank ID4D; ITU IDI; GSMA Mobile Connectivity Index; UN EGDI/Survey",
+          "normalization": "pct_to_5",
+          "description": "handset/data affordability"
         }
       }
     },
@@ -94,50 +100,48 @@
       },
       "questions": {
         "P1.2.EX.Q1": {
-          "weight": 0.2,
+          "weight": 0.275,
           "component": "expert",
           "zero_weight": false
         },
         "P1.2.EX.Q2": {
-          "weight": 0.175,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P1.2.EX.Q3": {
-          "weight": 0.125,
+          "weight": 0.225,
           "component": "expert",
           "zero_weight": false
         },
         "P1.2.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P1.2.NE.Q2": {
-          "weight": 0.14,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P1.2.NE.Q3": {
-          "weight": 0.1,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P1.2.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "UN EGDI/LOSI; ITU IDI; GSMA affordability; UNICEF accessibility references",
           "normalization": "pct_to_5",
-          "description": "e-Gov service satisfaction rate (%)"
+          "description": "Accessibility-related online service indicators"
         },
         "IND.P1.2.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "UNDP",
-          "normalization": "index_to_5",
-          "description": "Digital services UX index (0\u20131)"
+          "source": "UN EGDI/LOSI; ITU IDI; GSMA affordability; UNICEF accessibility references",
+          "normalization": "pct_to_5",
+          "description": "connectivity and affordability"
+        },
+        "IND.P1.2.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "UN EGDI/LOSI; ITU IDI; GSMA affordability; UNICEF accessibility references",
+          "normalization": "pct_to_5",
+          "description": "device access proxies"
         }
       }
     },
@@ -168,35 +172,38 @@
           "zero_weight": false
         },
         "P1.3.NE.Q1": {
-          "weight": 0.14,
+          "weight": 0.1925,
           "component": "survey",
           "zero_weight": false
         },
         "P1.3.NE.Q2": {
-          "weight": 0.1225,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P1.3.NE.Q3": {
-          "weight": 0.0875,
+          "weight": 0.1575,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P1.3.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Digital services integration rate (%)"
+          "source": "GTMI Public Service Delivery Index; UN E-Government Survey; Global Findex for financial use cases",
+          "normalization": "index_to_5",
+          "description": "Online services maturity"
         },
         "IND.P1.3.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "index_to_5",
-          "description": "e-Gov interoperability index (0\u20131)"
+          "source": "GTMI Public Service Delivery Index; UN E-Government Survey; Global Findex for financial use cases",
+          "normalization": "pct_to_5",
+          "description": "digital service uptake"
+        },
+        "IND.P1.3.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "GTMI Public Service Delivery Index; UN E-Government Survey; Global Findex for financial use cases",
+          "normalization": "pct_to_5",
+          "description": "account ownership and digital payment usage"
         }
       }
     },
@@ -227,35 +234,30 @@
           "zero_weight": false
         },
         "P1.4.NE.Q1": {
-          "weight": 0.14,
+          "weight": 0.1925,
           "component": "survey",
           "zero_weight": false
         },
         "P1.4.NE.Q2": {
-          "weight": 0.1225,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P1.4.NE.Q3": {
-          "weight": 0.0875,
+          "weight": 0.1575,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P1.4.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Digital ID economic value index (%)"
+          "source": "GTMI; UN E-Government Survey; World Bank/UNDP case evidence",
+          "normalization": "index_to_5",
+          "description": "Digital service maturity proxies"
         },
         "IND.P1.4.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "GSMA",
-          "normalization": "index_to_5",
-          "description": "Mobile money penetration index (0\u20131)"
+          "source": "GTMI; UN E-Government Survey; World Bank/UNDP case evidence",
+          "normalization": "pct_to_5",
+          "description": "case-study evidence of time/cost savings"
         }
       }
     },
@@ -271,50 +273,40 @@
       },
       "questions": {
         "P1.5.EX.Q1": {
-          "weight": 0.2,
+          "weight": 0.275,
           "component": "expert",
           "zero_weight": false
         },
         "P1.5.EX.Q2": {
-          "weight": 0.175,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P1.5.EX.Q3": {
-          "weight": 0.125,
+          "weight": 0.225,
           "component": "expert",
           "zero_weight": false
         },
         "P1.5.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P1.5.NE.Q2": {
-          "weight": 0.14,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P1.5.NE.Q3": {
-          "weight": 0.1,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P1.5.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "pct_to_5",
-          "description": "Digital service improvement rate (%)"
+          "source": "UN E-Participation Index; LOSI; GTMI citizen engagement indicators",
+          "normalization": "index_to_5",
+          "description": "Citizen feedback/e-participation proxies"
         },
         "IND.P1.5.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "index_to_5",
-          "description": "Gov innovation index (0\u20131)"
+          "source": "UN E-Participation Index; LOSI; GTMI citizen engagement indicators",
+          "normalization": "pct_to_5",
+          "description": "local digital participation features"
         }
       }
     },
@@ -345,35 +337,38 @@
           "zero_weight": false
         },
         "P2.1.NE.Q1": {
-          "weight": 0.14,
+          "weight": 0.1925,
           "component": "survey",
           "zero_weight": false
         },
         "P2.1.NE.Q2": {
-          "weight": 0.1225,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P2.1.NE.Q3": {
-          "weight": 0.0875,
+          "weight": 0.1575,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P2.1.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "UNCTAD",
-          "normalization": "index_to_5",
-          "description": "Data protection law index (0\u20131)"
+          "source": "UNCTAD Privacy Map; OECD privacy/AI principles; UNDP Safeguards/Data governance",
+          "normalization": "binary_map",
+          "description": "Presence of privacy law"
         },
         "IND.P2.1.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "UNCTAD Privacy Map; OECD privacy/AI principles; UNDP Safeguards/Data governance",
           "normalization": "pct_to_5",
-          "description": "Consent mechanism coverage (%)"
+          "description": "purpose-limitation/consent provisions"
+        },
+        "IND.P2.1.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "UNCTAD Privacy Map; OECD privacy/AI principles; UNDP Safeguards/Data governance",
+          "normalization": "binary_map",
+          "description": "privacy-preserving design references"
         }
       }
     },
@@ -389,50 +384,40 @@
       },
       "questions": {
         "P2.2.EX.Q1": {
-          "weight": 0.2,
+          "weight": 0.275,
           "component": "expert",
           "zero_weight": false
         },
         "P2.2.EX.Q2": {
-          "weight": 0.175,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P2.2.EX.Q3": {
-          "weight": 0.125,
+          "weight": 0.225,
           "component": "expert",
           "zero_weight": false
         },
         "P2.2.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P2.2.NE.Q2": {
-          "weight": 0.14,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P2.2.NE.Q3": {
-          "weight": 0.1,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P2.2.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WJP",
-          "normalization": "index_to_5",
-          "description": "Transparency index (0\u20131)"
+          "source": "UN E-Government Survey; E-Participation Index; OECD AI Principles; UNDP Safeguards",
+          "normalization": "binary_map",
+          "description": "Public information availability"
         },
         "IND.P2.2.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "pct_to_5",
-          "description": "Public awareness rate (%)"
+          "source": "UN E-Government Survey; E-Participation Index; OECD AI Principles; UNDP Safeguards",
+          "normalization": "binary_map",
+          "description": "explainability/transparency policy references"
         }
       }
     },
@@ -448,50 +433,40 @@
       },
       "questions": {
         "P2.3.EX.Q1": {
-          "weight": 0.2,
+          "weight": 0.275,
           "component": "expert",
           "zero_weight": false
         },
         "P2.3.EX.Q2": {
-          "weight": 0.175,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P2.3.EX.Q3": {
-          "weight": 0.125,
+          "weight": 0.225,
           "component": "expert",
           "zero_weight": false
         },
         "P2.3.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P2.3.NE.Q2": {
-          "weight": 0.14,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P2.3.NE.Q3": {
-          "weight": 0.1,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P2.3.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WJP",
-          "normalization": "index_to_5",
-          "description": "Rule of law index (0\u20131)"
+          "source": "UN EPI; governance proxies; UNDP Safeguards",
+          "normalization": "binary_map",
+          "description": "Complaint/participation proxies"
         },
         "IND.P2.3.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Grievance redress rate (%)"
+          "source": "UN EPI; governance proxies; UNDP Safeguards",
+          "normalization": "binary_map",
+          "description": "availability of review channels if country-specific legal data added later"
         }
       }
     },
@@ -507,50 +482,48 @@
       },
       "questions": {
         "P2.4.EX.Q1": {
-          "weight": 0.2,
+          "weight": 0.275,
           "component": "expert",
           "zero_weight": false
         },
         "P2.4.EX.Q2": {
-          "weight": 0.175,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P2.4.EX.Q3": {
-          "weight": 0.125,
+          "weight": 0.225,
           "component": "expert",
           "zero_weight": false
         },
         "P2.4.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P2.4.NE.Q2": {
-          "weight": 0.14,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P2.4.NE.Q3": {
-          "weight": 0.1,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P2.4.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "UNDP",
-          "normalization": "index_to_5",
-          "description": "Gender equality index (0\u20131)"
+          "source": "World Bank ID4D disaggregations; ITU/GSMA digital divide indicators; Women, Business and the Law where relevant; UNICEF accessibility references",
+          "normalization": "pct_to_5",
+          "description": "Gender/rural/poverty gaps in ID"
         },
         "IND.P2.4.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "World Bank ID4D disaggregations; ITU/GSMA digital divide indicators; Women, Business and the Law where relevant; UNICEF accessibility references",
           "normalization": "pct_to_5",
-          "description": "Digital inclusion equity rate (%)"
+          "description": "connectivity, device access"
+        },
+        "IND.P2.4.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "World Bank ID4D disaggregations; ITU/GSMA digital divide indicators; Women, Business and the Law where relevant; UNICEF accessibility references",
+          "normalization": "pct_to_5",
+          "description": "legal constraints affecting women"
         }
       }
     },
@@ -566,50 +539,32 @@
       },
       "questions": {
         "P2.5.EX.Q1": {
-          "weight": 0.24,
+          "weight": 0.33,
           "component": "expert",
           "zero_weight": false
         },
         "P2.5.EX.Q2": {
-          "weight": 0.21,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P2.5.EX.Q3": {
-          "weight": 0.15,
+          "weight": 0.27,
           "component": "expert",
           "zero_weight": false
         },
         "P2.5.NE.Q1": {
-          "weight": 0.12,
+          "weight": 0.165,
           "component": "survey",
           "zero_weight": false
         },
         "P2.5.NE.Q2": {
-          "weight": 0.105,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P2.5.NE.Q3": {
-          "weight": 0.075,
+          "weight": 0.135,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P2.5.01": {
-          "weight": 0.06,
+          "weight": 0.1,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WJP",
-          "normalization": "index_to_5",
-          "description": "Judicial independence index (0\u20131)"
-        },
-        "IND.P2.5.02": {
-          "weight": 0.04,
-          "component": "indicator",
-          "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Oversight body effectiveness (%)"
+          "source": "UNCTAD for oversight-law context; UN EPI/EGDI for reporting culture; OECD/UNDP safeguards",
+          "normalization": "binary_map",
+          "description": "Existence of independent authority; audit/reporting provisions"
         }
       }
     },
@@ -625,50 +580,40 @@
       },
       "questions": {
         "P3.1.EX.Q1": {
-          "weight": 0.22,
+          "weight": 0.3025,
           "component": "expert",
           "zero_weight": false
         },
         "P3.1.EX.Q2": {
-          "weight": 0.1925,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P3.1.EX.Q3": {
-          "weight": 0.1375,
+          "weight": 0.2475,
           "component": "expert",
           "zero_weight": false
         },
         "P3.1.NE.Q1": {
-          "weight": 0.14,
+          "weight": 0.1925,
           "component": "survey",
           "zero_weight": false
         },
         "P3.1.NE.Q2": {
-          "weight": 0.1225,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P3.1.NE.Q3": {
-          "weight": 0.0875,
+          "weight": 0.1575,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P3.1.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Private sector digital ID adoption (%)"
+          "source": "UNCTAD e-transaction laws; GTMI; Global Findex",
+          "normalization": "binary_map",
+          "description": "Legal enablement for electronic transactions"
         },
         "IND.P3.1.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "GSMA",
-          "normalization": "index_to_5",
-          "description": "Mobile ecosystem maturity (0\u20131)"
+          "source": "UNCTAD e-transaction laws; GTMI; Global Findex",
+          "normalization": "pct_to_5",
+          "description": "digital payments/financial uptake"
         }
       }
     },
@@ -699,35 +644,22 @@
           "zero_weight": false
         },
         "P3.2.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P3.2.NE.Q2": {
-          "weight": 0.14,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P3.2.NE.Q3": {
-          "weight": 0.1,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P3.2.01": {
-          "weight": 0.06,
+          "weight": 0.1,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "Global Findex; GTMI; UNDP DPI compendium/case evidence",
           "normalization": "pct_to_5",
-          "description": "Digital ID use case coverage (%)"
-        },
-        "IND.P3.2.02": {
-          "weight": 0.04,
-          "component": "indicator",
-          "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "index_to_5",
-          "description": "Digital services breadth index (0\u20131)"
+          "description": "Digital payments, account use, online service maturity, sectoral DPI use cases"
         }
       }
     },
@@ -768,20 +700,20 @@
           "zero_weight": false
         },
         "IND.P3.3.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ISO",
-          "normalization": "index_to_5",
-          "description": "Standards adoption index (0\u20131)"
+          "source": "DPG Registry; UNDP Default to Open; GTMI; OECD/ISO adoption references where added later",
+          "normalization": "binary_map",
+          "description": "Open standards/open-source recognition"
         },
         "IND.P3.3.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "DPG Registry; UNDP Default to Open; GTMI; OECD/ISO adoption references where added later",
           "normalization": "pct_to_5",
-          "description": "Certification compliance rate (%)"
+          "description": "conformance-related proxies"
         }
       }
     },
@@ -793,38 +725,44 @@
       "component_budgets": {
         "expert": 0.6,
         "survey": 0.4,
-        "indicator": 0.0
+        "indicator": 0
       },
       "questions": {
         "P3.4.EX.Q1": {
-          "weight": 0.24,
+          "weight": 0.33,
           "component": "expert",
           "zero_weight": false
         },
         "P3.4.EX.Q2": {
-          "weight": 0.21,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P3.4.EX.Q3": {
-          "weight": 0.15,
+          "weight": 0.27,
           "component": "expert",
           "zero_weight": false
         },
         "P3.4.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P3.4.NE.Q2": {
-          "weight": 0.14,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
-        "P3.4.NE.Q3": {
-          "weight": 0.1,
-          "component": "survey",
-          "zero_weight": false
+        "IND.P3.4.01": {
+          "weight": 0,
+          "component": "indicator",
+          "zero_weight": true,
+          "source": "GTMI; DPG Registry; UNDP digital standards/default to open",
+          "normalization": "pct_to_5",
+          "description": "Availability of APIs/open docs/open components"
+        },
+        "IND.P3.4.02": {
+          "weight": 0,
+          "component": "indicator",
+          "zero_weight": true,
+          "source": "GTMI; DPG Registry; UNDP digital standards/default to open",
+          "normalization": "binary_map",
+          "description": "sandbox/open ecosystem signals"
         }
       }
     },
@@ -855,35 +793,30 @@
           "zero_weight": false
         },
         "P3.5.NE.Q1": {
-          "weight": 0.1,
+          "weight": 0.1375,
           "component": "survey",
           "zero_weight": false
         },
         "P3.5.NE.Q2": {
-          "weight": 0.0875,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P3.5.NE.Q3": {
-          "weight": 0.0625,
+          "weight": 0.1125,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P3.5.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "index_to_5",
-          "description": "Cross-border interop index (0\u20131)"
+          "source": "UNCTAD cross-border data flow references; GTMI interoperability; regional DPI/50-in-5 references",
+          "normalization": "binary_map",
+          "description": "Cross-border data transfer/privacy rules"
         },
         "IND.P3.5.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "UNCTAD cross-border data flow references; GTMI interoperability; regional DPI/50-in-5 references",
           "normalization": "pct_to_5",
-          "description": "Regional digital ID recognition (%)"
+          "description": "regional cooperation presence"
         }
       }
     },
@@ -924,20 +857,12 @@
           "zero_weight": false
         },
         "IND.P4.1.01": {
-          "weight": 0.06,
+          "weight": 0.1,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank GTMI; UNDP DPI playbook/standards; DPG Registry",
           "normalization": "index_to_5",
-          "description": "ID system architecture maturity (0\u20131)"
-        },
-        "IND.P4.1.02": {
-          "weight": 0.04,
-          "component": "indicator",
-          "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "System uptime/availability (%)"
+          "description": "Enterprise architecture; modular/open system presence; use of DPG/open architecture"
         }
       }
     },
@@ -978,20 +903,12 @@
           "zero_weight": false
         },
         "IND.P4.2.01": {
-          "weight": 0.06,
+          "weight": 0.1,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank GTMI; UNDP Data Exchange Governance; UN EGDI",
           "normalization": "index_to_5",
-          "description": "Data exchange protocol adoption (0\u20131)"
-        },
-        "IND.P4.2.02": {
-          "weight": 0.04,
-          "component": "indicator",
-          "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "API integration coverage (%)"
+          "description": "Interoperability framework; shared service bus/data exchange platform; API-enabled services proxies"
         }
       }
     },
@@ -1032,20 +949,28 @@
           "zero_weight": false
         },
         "IND.P4.3.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "index_to_5",
-          "description": "DPI integration maturity (0\u20131)"
+          "source": "World Bank GTMI; UNDP DPI page/playbook; Global Findex for payments adoption",
+          "normalization": "binary_map",
+          "description": "Integration with payment rails/shared registries"
         },
         "IND.P4.3.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank GTMI; UNDP DPI page/playbook; Global Findex for payments adoption",
           "normalization": "pct_to_5",
-          "description": "Digital public infrastructure coverage (%)"
+          "description": "digital payments usage"
+        },
+        "IND.P4.3.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "World Bank GTMI; UNDP DPI page/playbook; Global Findex for payments adoption",
+          "normalization": "index_to_5",
+          "description": "service integration proxies"
         }
       }
     },
@@ -1061,17 +986,12 @@
       },
       "questions": {
         "P4.4.EX.Q1": {
-          "weight": 0.26,
+          "weight": 0.3575,
           "component": "expert",
           "zero_weight": false
         },
         "P4.4.EX.Q2": {
-          "weight": 0.2275,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P4.4.EX.Q3": {
-          "weight": 0.1625,
+          "weight": 0.2925,
           "component": "expert",
           "zero_weight": false
         },
@@ -1086,20 +1006,20 @@
           "zero_weight": false
         },
         "IND.P4.4.01": {
-          "weight": 0.09,
+          "weight": 0.075,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "index_to_5",
-          "description": "ITU Global Cybersecurity Index (0\u20131)"
+          "source": "GTMI; ITU cybersecurity-related digital readiness context; UNDP Data initiatives",
+          "normalization": "binary_map",
+          "description": "Shared secure infrastructure"
         },
         "IND.P4.4.02": {
-          "weight": 0.06,
+          "weight": 0.075,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Cybersecurity incident response rate (%)"
+          "source": "GTMI; ITU cybersecurity-related digital readiness context; UNDP Data initiatives",
+          "normalization": "binary_map",
+          "description": "resilience/business continuity proxies"
         }
       }
     },
@@ -1115,17 +1035,12 @@
       },
       "questions": {
         "P4.5.EX.Q1": {
-          "weight": 0.24,
+          "weight": 0.33,
           "component": "expert",
           "zero_weight": false
         },
         "P4.5.EX.Q2": {
-          "weight": 0.21,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P4.5.EX.Q3": {
-          "weight": 0.15,
+          "weight": 0.27,
           "component": "expert",
           "zero_weight": false
         },
@@ -1140,20 +1055,12 @@
           "zero_weight": false
         },
         "IND.P4.5.01": {
-          "weight": 0.06,
+          "weight": 0.1,
           "component": "indicator",
           "zero_weight": false,
-          "source": "GitHub",
-          "normalization": "pct_to_5",
-          "description": "Open source DPG contribution rate (%)"
-        },
-        "IND.P4.5.02": {
-          "weight": 0.04,
-          "component": "indicator",
-          "zero_weight": false,
-          "source": "DPGA",
-          "normalization": "index_to_5",
-          "description": "DPG registry adoption index (0\u20131)"
+          "source": "DPG Registry; DPGA DPI collection; UNDP Default to Open; UNDP Digital Standards",
+          "normalization": "binary_map",
+          "description": "Presence of recognized DPGs; open-source status; open standards/open APIs adoption"
         }
       }
     },
@@ -1184,35 +1091,46 @@
           "zero_weight": false
         },
         "P5.1.NE.Q1": {
-          "weight": 0.12,
+          "weight": 0.165,
           "component": "survey",
           "zero_weight": false
         },
         "P5.1.NE.Q2": {
-          "weight": 0.105,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P5.1.NE.Q3": {
-          "weight": 0.075,
+          "weight": 0.135,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P5.1.01": {
-          "weight": 0.06,
+          "weight": 0.025,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "World Bank ID4D; UNICEF/SDG 16.9 via ID4D proxies",
           "normalization": "pct_to_5",
-          "description": "Civil registration coverage (%)"
+          "description": "Birth registration coverage"
         },
         "IND.P5.1.02": {
-          "weight": 0.04,
+          "weight": 0.025,
           "component": "indicator",
           "zero_weight": false,
-          "source": "UNDP",
-          "normalization": "index_to_5",
-          "description": "Legal identity framework index (0\u20131)"
+          "source": "World Bank ID4D; UNICEF/SDG 16.9 via ID4D proxies",
+          "normalization": "pct_to_5",
+          "description": "% adults with official ID"
+        },
+        "IND.P5.1.03": {
+          "weight": 0.025,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "World Bank ID4D; UNICEF/SDG 16.9 via ID4D proxies",
+          "normalization": "pct_to_5",
+          "description": "population without proof of identity"
+        },
+        "IND.P5.1.04": {
+          "weight": 0.025,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "World Bank ID4D; UNICEF/SDG 16.9 via ID4D proxies",
+          "normalization": "pct_to_5",
+          "description": "sex/rural income gaps"
         }
       }
     },
@@ -1243,35 +1161,38 @@
           "zero_weight": false
         },
         "P5.2.NE.Q1": {
-          "weight": 0.12,
+          "weight": 0.165,
           "component": "survey",
           "zero_weight": false
         },
         "P5.2.NE.Q2": {
-          "weight": 0.105,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P5.2.NE.Q3": {
-          "weight": 0.075,
+          "weight": 0.135,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P5.2.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "UNCTAD",
-          "normalization": "index_to_5",
-          "description": "Data protection law strength (0\u20131)"
+          "source": "UNCTAD Privacy Map; UNCTAD Cyberlaw Tracker; World Bank GTMI; UNDP Digital Development Compass",
+          "normalization": "binary_map",
+          "description": "Existence of data protection/privacy law"
         },
         "IND.P5.2.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "UNCTAD Privacy Map; UNCTAD Cyberlaw Tracker; World Bank GTMI; UNDP Digital Development Compass",
+          "normalization": "binary_map",
+          "description": "e-transaction law context"
+        },
+        "IND.P5.2.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "UNCTAD Privacy Map; UNCTAD Cyberlaw Tracker; World Bank GTMI; UNDP Digital Development Compass",
           "normalization": "pct_to_5",
-          "description": "Privacy regulation compliance (%)"
+          "description": "digital government/data governance proxies"
         }
       }
     },
@@ -1302,35 +1223,38 @@
           "zero_weight": false
         },
         "P5.3.NE.Q1": {
-          "weight": 0.1,
+          "weight": 0.1375,
           "component": "survey",
           "zero_weight": false
         },
         "P5.3.NE.Q2": {
-          "weight": 0.0875,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P5.3.NE.Q3": {
-          "weight": 0.0625,
+          "weight": 0.1125,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P5.3.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "index_to_5",
-          "description": "Trust services framework index (0\u20131)"
+          "source": "UNCTAD Cyberlaw Tracker; World Bank GTMI; UN DESA E-Government Survey; DPG Registry (e-sign/open tools)",
+          "normalization": "binary_map",
+          "description": "Existence of e-transactions law"
         },
         "IND.P5.3.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "UNCTAD Cyberlaw Tracker; World Bank GTMI; UN DESA E-Government Survey; DPG Registry (e-sign/open tools)",
+          "normalization": "index_to_5",
+          "description": "online public service maturity"
+        },
+        "IND.P5.3.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "UNCTAD Cyberlaw Tracker; World Bank GTMI; UN DESA E-Government Survey; DPG Registry (e-sign/open tools)",
           "normalization": "pct_to_5",
-          "description": "e-Signature legal recognition (%)"
+          "description": "trust-service/e-sign related DPG presence (where relevant)"
         }
       }
     },
@@ -1346,17 +1270,12 @@
       },
       "questions": {
         "P5.4.EX.Q1": {
-          "weight": 0.26,
+          "weight": 0.3575,
           "component": "expert",
           "zero_weight": false
         },
         "P5.4.EX.Q2": {
-          "weight": 0.2275,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P5.4.EX.Q3": {
-          "weight": 0.1625,
+          "weight": 0.2925,
           "component": "expert",
           "zero_weight": false
         },
@@ -1371,20 +1290,28 @@
           "zero_weight": false
         },
         "IND.P5.4.01": {
-          "weight": 0.06,
+          "weight": 0.0334,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
-          "normalization": "index_to_5",
-          "description": "AI governance framework index (0\u20131)"
+          "source": "OECD AI Policy Observatory; OECD AI Principles; UNESCO/UNDP AI or safeguards references",
+          "normalization": "binary_map",
+          "description": "National AI policy/strategy existence"
         },
         "IND.P5.4.02": {
-          "weight": 0.04,
+          "weight": 0.0333,
           "component": "indicator",
           "zero_weight": false,
-          "source": "OECD",
+          "source": "OECD AI Policy Observatory; OECD AI Principles; UNESCO/UNDP AI or safeguards references",
           "normalization": "pct_to_5",
-          "description": "Emerging tech regulation coverage (%)"
+          "description": "AI risk-management guidance"
+        },
+        "IND.P5.4.03": {
+          "weight": 0.0333,
+          "component": "indicator",
+          "zero_weight": false,
+          "source": "OECD AI Policy Observatory; OECD AI Principles; UNESCO/UNDP AI or safeguards references",
+          "normalization": "pct_to_5",
+          "description": "AI incident/risk monitoring presence"
         }
       }
     },
@@ -1425,20 +1352,20 @@
           "zero_weight": false
         },
         "IND.P5.5.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank GTMI; OECD digital government materials; UNDP data exchange governance references",
           "normalization": "index_to_5",
-          "description": "Legal interoperability index (0\u20131)"
+          "description": "National interoperability framework;  shared data exchange platform; enterprise architecture"
         },
         "IND.P5.5.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Cross-border legal recognition (%)"
+          "source": "World Bank GTMI; OECD digital government materials; UNDP data exchange governance references",
+          "normalization": "binary_map",
+          "description": "cross-border data-flow/privacy rules"
         }
       }
     },
@@ -1454,50 +1381,40 @@
       },
       "questions": {
         "P6.1.EX.Q1": {
-          "weight": 0.22,
+          "weight": 0.3025,
           "component": "expert",
           "zero_weight": false
         },
         "P6.1.EX.Q2": {
-          "weight": 0.1925,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P6.1.EX.Q3": {
-          "weight": 0.1375,
+          "weight": 0.2475,
           "component": "expert",
           "zero_weight": false
         },
         "P6.1.NE.Q1": {
-          "weight": 0.14,
+          "weight": 0.1925,
           "component": "survey",
           "zero_weight": false
         },
         "P6.1.NE.Q2": {
-          "weight": 0.1225,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P6.1.NE.Q3": {
-          "weight": 0.0875,
+          "weight": 0.1575,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P6.1.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "World Bank GTMI; UN EGDI/Survey 2024; UNDP DDC",
           "normalization": "index_to_5",
-          "description": "Gov effectiveness index (0\u20131)"
+          "description": "Whole-of-government approach; enterprise architecture"
         },
         "IND.P6.1.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank GTMI; UN EGDI/Survey 2024; UNDP DDC",
           "normalization": "pct_to_5",
-          "description": "Digital leadership coordination (%)"
+          "description": "central digital leadership arrangements"
         }
       }
     },
@@ -1509,7 +1426,7 @@
       "component_budgets": {
         "expert": 0.6,
         "survey": 0.4,
-        "indicator": 0.0
+        "indicator": 0
       },
       "questions": {
         "P6.2.EX.Q1": {
@@ -1528,19 +1445,38 @@
           "zero_weight": false
         },
         "P6.2.NE.Q1": {
-          "weight": 0.16,
+          "weight": 0.22,
           "component": "survey",
           "zero_weight": false
         },
         "P6.2.NE.Q2": {
-          "weight": 0.14,
+          "weight": 0.18,
           "component": "survey",
           "zero_weight": false
         },
-        "P6.2.NE.Q3": {
-          "weight": 0.1,
-          "component": "survey",
-          "zero_weight": false
+        "IND.P6.2.01": {
+          "weight": 0,
+          "component": "indicator",
+          "zero_weight": true,
+          "source": "UN EGDI (Human Capital component); ITU IDI skills/connectivity context; UNDP DDC",
+          "normalization": "index_to_5",
+          "description": "Human capital score"
+        },
+        "IND.P6.2.02": {
+          "weight": 0,
+          "component": "indicator",
+          "zero_weight": true,
+          "source": "UN EGDI (Human Capital component); ITU IDI skills/connectivity context; UNDP DDC",
+          "normalization": "pct_to_5",
+          "description": "digital skills / ICT use indicators"
+        },
+        "IND.P6.2.03": {
+          "weight": 0,
+          "component": "indicator",
+          "zero_weight": true,
+          "source": "UN EGDI (Human Capital component); ITU IDI skills/connectivity context; UNDP DDC",
+          "normalization": "pct_to_5",
+          "description": "public sector digital capacity proxies"
         }
       }
     },
@@ -1556,17 +1492,12 @@
       },
       "questions": {
         "P6.3.EX.Q1": {
-          "weight": 0.26,
+          "weight": 0.3575,
           "component": "expert",
           "zero_weight": false
         },
         "P6.3.EX.Q2": {
-          "weight": 0.2275,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P6.3.EX.Q3": {
-          "weight": 0.1625,
+          "weight": 0.2925,
           "component": "expert",
           "zero_weight": false
         },
@@ -1581,20 +1512,20 @@
           "zero_weight": false
         },
         "IND.P6.3.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "index_to_5",
-          "description": "Vendor management maturity (0\u20131)"
+          "source": "World Bank GTMI; OECD digital government procurement guidance (qualitative); DPG/open-source sources",
+          "normalization": "binary_map",
+          "description": "Presence of modular architecture/open APIs/open source"
         },
         "IND.P6.3.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "ITU",
+          "source": "World Bank GTMI; OECD digital government procurement guidance (qualitative); DPG/open-source sources",
           "normalization": "pct_to_5",
-          "description": "Technical dependency risk index (%)"
+          "description": "shared platforms that reduce lock-in"
         }
       }
     },
@@ -1610,17 +1541,12 @@
       },
       "questions": {
         "P6.4.EX.Q1": {
-          "weight": 0.24,
+          "weight": 0.33,
           "component": "expert",
           "zero_weight": false
         },
         "P6.4.EX.Q2": {
-          "weight": 0.21,
-          "component": "expert",
-          "zero_weight": false
-        },
-        "P6.4.EX.Q3": {
-          "weight": 0.15,
+          "weight": 0.27,
           "component": "expert",
           "zero_weight": false
         },
@@ -1635,20 +1561,20 @@
           "zero_weight": false
         },
         "IND.P6.4.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WJP",
+          "source": "World Bank Worldwide Governance-style proxies not ID-specific; GTMI; UN EPI/EGDI",
           "normalization": "index_to_5",
-          "description": "Institutional accountability index (0\u20131)"
+          "description": "Government effectiveness/accountability proxies"
         },
         "IND.P6.4.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
-          "normalization": "pct_to_5",
-          "description": "Audit compliance rate (%)"
+          "source": "World Bank Worldwide Governance-style proxies not ID-specific; GTMI; UN EPI/EGDI",
+          "normalization": "index_to_5",
+          "description": "public reporting and participation proxies"
         }
       }
     },
@@ -1679,35 +1605,30 @@
           "zero_weight": false
         },
         "P6.5.NE.Q1": {
-          "weight": 0.12,
+          "weight": 0.165,
           "component": "survey",
           "zero_weight": false
         },
         "P6.5.NE.Q2": {
-          "weight": 0.105,
-          "component": "survey",
-          "zero_weight": false
-        },
-        "P6.5.NE.Q3": {
-          "weight": 0.075,
+          "weight": 0.135,
           "component": "survey",
           "zero_weight": false
         },
         "IND.P6.5.01": {
-          "weight": 0.06,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "WorldBank",
+          "source": "World Bank GTMI; national budget openness sources (if country-level); UNDP DDC",
           "normalization": "pct_to_5",
-          "description": "Digital ID budget sustainability (%)"
+          "description": "Existence of funded GovTech programs"
         },
         "IND.P6.5.02": {
-          "weight": 0.04,
+          "weight": 0.05,
           "component": "indicator",
           "zero_weight": false,
-          "source": "IMF",
-          "normalization": "index_to_5",
-          "description": "Fiscal sustainability index (0\u20131)"
+          "source": "World Bank GTMI; national budget openness sources (if country-level); UNDP DDC",
+          "normalization": "pct_to_5",
+          "description": "sustainability signals from core systems maturity"
         }
       }
     }

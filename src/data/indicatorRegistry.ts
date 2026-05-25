@@ -116,7 +116,7 @@ export function getIndicatorRegistry(): IndicatorDefinition[] {
       }
 
       indicators.push({
-        code: `${currentSubpillar}.${subpillarCounter}`,
+        code: `IND.${currentSubpillar}.${String(subpillarCounter).padStart(2, '0')}`,
         pillar_code: currentPillar,
         subpillar_code: currentSubpillar,
         subpillar_name: currentSubpillarName,

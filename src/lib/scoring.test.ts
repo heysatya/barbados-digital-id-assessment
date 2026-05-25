@@ -54,63 +54,62 @@ describe('Scoring Engine v3.0: Unified Weight Pool Aggregation', () => {
     ],
     expert_responses: [
       { q_code: 'P1.1.EX.Q1', subpillar_code: 'P1.1', pillar_code: 'P1', score: 4 },
-      { q_code: 'P1.1.EX.Q2', subpillar_code: 'P1.1', pillar_code: 'P1', score: 3 },
-      { q_code: 'P1.1.EX.Q3', subpillar_code: 'P1.1', pillar_code: 'P1', score: 9 } // Sentinel 9 excluded
+      { q_code: 'P1.1.EX.Q2', subpillar_code: 'P1.1', pillar_code: 'P1', score: 3 }
     ],
     indicator_values: [
       { indicator_code: 'IND.P1.1.01', subpillar_code: 'P1.1', pillar_code: 'P1', raw_value: 72 }, // 1 + (72/100)*4 = 3.88
-      { indicator_code: 'IND.P1.1.02', subpillar_code: 'P1.1', pillar_code: 'P1', raw_value: 0.60 } // 1 + 0.60*4 = 3.4
+      { indicator_code: 'IND.P1.1.02', subpillar_code: 'P1.1', pillar_code: 'P1', raw_value: 0.60 } // 1 + (0.60/100)*4 = 1.024
     ]
   };
 
   it('calculates sub-pillar scores using correct weights and 1-5 scale', () => {
-    // Weights from rubric_config.json for P1.1:
-    // EX.Q1: 0.22
-    // EX.Q2: 0.1925
-    // EX.Q3: 0.1375 (excluded)
-    // NE.Q1: 0.14
-    // NE.Q2: 0.1225
-    // NE.Q3: 0.0875 (missing)
-    // IND.01: 0.06
-    // IND.02: 0.04
+    // Weights from rubric_config.json v1.2 for P1.1:
+    // P1.1.EX.Q1: 0.3025
+    // P1.1.EX.Q2: 0.2475
+    // P1.1.NE.Q1: 0.1925
+    // P1.1.NE.Q2: 0.1575
+    // IND.P1.1.01: 0.025
+    // IND.P1.1.02: 0.025
     
     // Scores:
-    // NE.Q1: 4.1666...
-    // NE.Q2: 3.5
-    // EX.Q1: 4.0
-    // EX.Q2: 3.0
-    // IND.01: 3.88
-    // IND.02: 3.4
+    // P1.1.NE.Q1: 4.1667
+    // P1.1.NE.Q2: 3.5
+    // P1.1.EX.Q1: 4.0
+    // P1.1.EX.Q2: 3.0
+    // IND.P1.1.01: 3.88
+    // IND.P1.1.02: 1.024
     
-    // sumWeighted = (4.1666 * 0.14) + (3.5 * 0.1225) + (4.0 * 0.22) + (3.0 * 0.1925) + (3.88 * 0.06) + (3.4 * 0.04)
-    // sumWeighted = 0.5833 + 0.42875 + 0.88 + 0.5775 + 0.2328 + 0.136 = 2.83835
-    
-    // sumValidWeights = 0.14 + 0.1225 + 0.22 + 0.1925 + 0.06 + 0.04 = 0.775
-    
-    // score = 2.83835 / 0.775 = 3.662...
+    // sumWeighted = (4.16667 * 0.1925) + (3.5 * 0.1575) + (4.0 * 0.3025) + (3.0 * 0.2475) + (3.88 * 0.025) + (1.024 * 0.025)
+    // sumWeighted = 0.80208 + 0.55125 + 1.21 + 0.7425 + 0.097 + 0.0256 = 3.42843
+    // sumValidWeights = 0.1925 + 0.1575 + 0.3025 + 0.2475 + 0.025 + 0.025 = 0.95
+    // score = 3.42843 / 0.95 = 3.60887 -> 3.61
     
     const output = scoreAssessment(mockInput);
     const spP11 = output.subpillars.find(s => s.code === 'P1.1');
     
-    expect(spP11?.score).toBeCloseTo(3.66, 1);
+    expect(spP11?.score).toBeCloseTo(3.61, 1);
     expect(spP11?.maturity).toBe('Differentiating');
   });
 
   it('verifies no triangulation bonus is applied', () => {
-    // Even if 3+ stakeholders responded, the score should strictly follow weighted average
     const output = scoreAssessment(mockInput);
     const spP11 = output.subpillars.find(s => s.code === 'P1.1');
-    
-    // If triangulation (5% bonus) was applied, it would be around 3.84
     expect(spP11?.score).toBeLessThan(3.8);
   });
 
   it('correctly handles sentinel 9 (I don\'t know) by excluding it from weights', () => {
-    const output = scoreAssessment(mockInput);
-
+    const sentinelInput: DigitalIDAssessmentInput = {
+      ...mockInput,
+      expert_responses: [
+        { q_code: 'P1.1.EX.Q1', subpillar_code: 'P1.1', pillar_code: 'P1', score: 4 },
+        { q_code: 'P1.1.EX.Q2', subpillar_code: 'P1.1', pillar_code: 'P1', score: 9 } // sentinel 9!
+      ]
+    };
     
-    // Check validation log for sentinel exclusion
-    const sentinelLog = output.metadata.validation_log.find(l => l.item === 'P1.1.EX.Q3');
+    const output = scoreAssessment(sentinelInput);
+    
+    // Check validation log for sentinel exclusion of P1.1.EX.Q2
+    const sentinelLog = output.metadata.validation_log.find(l => l.item === 'P1.1.EX.Q2');
     expect(sentinelLog?.action).toBe('excluded_sentinel');
   });
 });
@@ -125,7 +124,7 @@ describe('Scoring Engine v3.0: Weight Redistribution', () => {
           q_code: 'P1.1.NE.Q1',
           subpillar_code: 'P1.1',
           pillar_code: 'P1',
-          response_counts: { r4: 10 } // Score 4.0, Weight 0.14
+          response_counts: { r4: 10 } // Score 4.0, Weight 0.1925
         }
       ],
       expert_responses: [], // All expert missing (Weight 0.55)
@@ -135,8 +134,8 @@ describe('Scoring Engine v3.0: Weight Redistribution', () => {
     const output = scoreAssessment(partialInput);
     const spP11 = output.subpillars.find(s => s.code === 'P1.1');
     
-    // Only one question valid. sumWeighted = 4.0 * 0.14. sumValidWeights = 0.14.
-    // Result = (4.0 * 0.14) / 0.14 = 4.0
+    // Only one question valid. sumWeighted = 4.0 * 0.1925. sumValidWeights = 0.1925.
+    // Result = (4.0 * 0.1925) / 0.1925 = 4.0
     expect(spP11?.score).toBe(4.0);
     expect(spP11?.data_quality_flag).toBe('⚠️ Partial');
   });
