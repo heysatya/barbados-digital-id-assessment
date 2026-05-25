@@ -31,7 +31,7 @@ function SurveyShellContent({ survey_type, surveyLabel }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const modeParam = searchParams.get('mode');
-  const mode = modeParam === 'live' ? 'live' : 'test';
+  const mode = modeParam === 'test' ? 'test' : 'live';
 
   // ── State ────────────────────────────────────────────────────────────────
   const [responses, setResponses] = useState<Record<string, number>>({});
