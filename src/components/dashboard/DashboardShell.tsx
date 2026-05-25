@@ -93,7 +93,7 @@ export default function DashboardShell({
         {/* Close Button (mobile only) */}
         <button
           onClick={() => setMobileMenuOpen(false)}
-          className="md:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-900 transition-colors"
+          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-900 transition-colors"
           title="Close Menu"
         >
           <X className="w-5 h-5" />
@@ -181,7 +181,7 @@ export default function DashboardShell({
   return (
     <div className="min-h-screen bg-[#F8F9FB] text-[#0D1117] flex selection:bg-[#003DA5]/10 selection:text-[#003DA5] overflow-hidden font-sans">
       {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
-      <aside className="hidden md:flex w-72 flex-shrink-0 flex-col border-r border-[#DDE1E9] bg-white shadow-2xl shadow-black/[0.02] z-20">
+      <aside className="hidden lg:flex w-72 flex-shrink-0 flex-col border-r border-[#DDE1E9] bg-white shadow-2xl shadow-black/[0.02] z-20">
         {renderSidebarContent()}
       </aside>
 
@@ -194,14 +194,14 @@ export default function DashboardShell({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-[#0D1117]/40 z-40 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 bg-[#0D1117]/40 z-40 backdrop-blur-sm lg:hidden"
             />
             <motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white border-r border-[#DDE1E9] z-50 flex flex-col md:hidden"
+              className="fixed inset-y-0 left-0 w-72 bg-white border-r border-[#DDE1E9] z-50 flex flex-col lg:hidden"
             >
               {renderSidebarContent()}
             </motion.aside>
@@ -212,17 +212,17 @@ export default function DashboardShell({
       {/* ── Main Content ─────────────────────────────────────────────────── */}
       <main className="flex-1 min-w-0 overflow-auto bg-[#F8F9FB] relative flex flex-col h-screen">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 px-4 md:px-10 py-5 bg-white/90 backdrop-blur-xl border-b border-[#DDE1E9] flex items-center justify-between shadow-sm">
+        <header className="sticky top-0 z-30 px-6 lg:px-10 py-5 bg-white/90 backdrop-blur-xl border-b border-[#DDE1E9] flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             {/* Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 -ml-2 rounded-xl text-[#4A5568] hover:text-[#0D1117] hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 -ml-2 rounded-xl text-[#4A5568] hover:text-[#0D1117] hover:bg-gray-100 transition-colors"
               title="Open Navigation Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h1 className="text-lg md:text-2xl font-black text-[#0D1117] font-display tracking-tight leading-none mb-1">
+            <h1 className="text-xl lg:text-2xl font-black text-[#0D1117] font-display tracking-tight leading-none mb-1">
               {NAV_ITEMS.find((n) => n.id === activeTab)?.label ?? 'Dashboard'}
             </h1>
           </div>
@@ -249,7 +249,7 @@ export default function DashboardShell({
         </header>
 
         {/* Page Content */}
-        <div className="p-6 md:p-10 max-w-[1600px] mx-auto w-full flex-grow">
+        <div className="p-6 lg:p-10 max-w-[1600px] mx-auto w-full flex-grow">
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 10 }}
