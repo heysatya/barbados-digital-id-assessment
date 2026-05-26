@@ -65,18 +65,26 @@ export async function POST(request: Request) {
     const mode: 'live' | 'test' = body.mode === 'test' ? 'test' : 'live';
     const rubricVersion = body.rubric_version ?? '3.0';
 
-    // ── 1. Fetch all sessions for the given mode ──────────────────────────
+    // ── 1. Fetch all active sessions for the given mode (excluding archived) ──
     const { data: sessions, error: sessErr } = await supabaseAdmin
       .from('assessment_sessions')
       .select('*')
-      .eq('environment_mode', mode);
+      .eq('environment_mode', mode)
+      .neq('status', 'archived');
 
     if (sessErr) throw sessErr;
     if (!sessions || sessions.length === 0) {
-      return NextResponse.json(
-        { error: `No assessment sessions found for mode: ${mode}` },
-        { status: 404 }
-      );
+      console.log(`[rescore] 0 active sessions remain in ${mode}. Wiping results cache.`);
+      await supabaseAdmin
+        .from('assessment_results')
+        .delete()
+        .eq('environment_mode', mode);
+
+      return NextResponse.json({
+        success: true,
+        cleared: true,
+        message: `No active sessions remain for mode: ${mode}. Cache wiped.`,
+      });
     }
 
     const sessionIds = sessions.map((s: { id: string }) => s.id);
