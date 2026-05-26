@@ -114,13 +114,32 @@ export default function DashboardPage() {
       // Dependent call: Responses (only if we have sessions)
       let responses: RawAssessmentResponse[] = [];
       if (sessionIds.length > 0) {
-        const { data: resp, error: rErr } = await supabase
-          .from('assessment_responses')
-          .select('*')
-          .neq('status', 'archived')
-          .in('assessment_id', sessionIds);
-        if (rErr) throw rErr;
-        responses = resp ?? [];
+        let allResponses: RawAssessmentResponse[] = [];
+        let hasMore = true;
+        let pageOffset = 0;
+        const pageSize = 1000;
+
+        while (hasMore) {
+          const { data: resp, error: rErr } = await supabase
+            .from('assessment_responses')
+            .select('*')
+            .neq('status', 'archived')
+            .in('assessment_id', sessionIds)
+            .range(pageOffset * pageSize, (pageOffset + 1) * pageSize - 1);
+
+          if (rErr) throw rErr;
+          if (!resp || resp.length === 0) {
+            hasMore = false;
+          } else {
+            allResponses = [...allResponses, ...resp];
+            if (resp.length < pageSize) {
+              hasMore = false;
+            } else {
+              pageOffset++;
+            }
+          }
+        }
+        responses = allResponses;
       }
 
       const latestResult = resultsRes.data?.[0];
