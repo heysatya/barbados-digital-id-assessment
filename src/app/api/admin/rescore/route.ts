@@ -4,7 +4,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { buildAssessmentInput } from '@/lib/assessmentAggregation';
+import { buildAssessmentInput, type RawAssessmentResponse } from '@/lib/assessmentAggregation';
 import { scoreAssessment } from '@/lib/scoring';
 
 const supabaseAdmin = createClient(
@@ -90,13 +90,32 @@ export async function POST(request: Request) {
     const sessionIds = sessions.map((s: { id: string }) => s.id);
 
     // ── 2. Fetch all responses for those sessions ─────────────────────────
-    const { data: responses, error: respErr } = await supabaseAdmin
-      .from('assessment_responses')
-      .select('*')
-      .neq('status', 'archived')
-      .in('assessment_id', sessionIds);
+    let allResponses: RawAssessmentResponse[] = [];
+    let hasMore = true;
+    let pageOffset = 0;
+    const pageSize = 1000;
 
-    if (respErr) throw respErr;
+    while (hasMore) {
+      const { data: resp, error: rErr } = await supabaseAdmin
+        .from('assessment_responses')
+        .select('*')
+        .neq('status', 'archived')
+        .in('assessment_id', sessionIds)
+        .range(pageOffset * pageSize, (pageOffset + 1) * pageSize - 1);
+
+      if (rErr) throw rErr;
+      if (!resp || resp.length === 0) {
+        hasMore = false;
+      } else {
+        allResponses = [...allResponses, ...resp as RawAssessmentResponse[]];
+        if (resp.length < pageSize) {
+          hasMore = false;
+        } else {
+          pageOffset++;
+        }
+      }
+    }
+    const responses = allResponses;
 
     // ── 3. Fetch indicator values for this mode ───────────────────────────
     const { data: indicators, error: indErr } = await supabaseAdmin

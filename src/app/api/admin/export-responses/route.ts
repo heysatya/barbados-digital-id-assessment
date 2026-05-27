@@ -120,18 +120,36 @@ export async function GET(request: Request) {
     const sessionIds = sessionRows.map((s) => s.id);
 
     // ── 2. Fetch Raw Responses ───────────────────────────────────────────────
-    const { data: responses, error: respErr } = sessionIds.length > 0
-      ? await supabaseAdmin
-        .from('assessment_responses')
-        .select('*')
-        .neq('status', 'archived')
-        .in('assessment_id', sessionIds)
-        .order('created_at', { ascending: true })
-      : { data: [], error: null };
+    let responseRows: ResponseRow[] = [];
+    if (sessionIds.length > 0) {
+      let allResponses: ResponseRow[] = [];
+      let hasMore = true;
+      let pageOffset = 0;
+      const pageSize = 1000;
 
-    if (respErr) throw respErr;
+      while (hasMore) {
+        const { data: resp, error: rErr } = await supabaseAdmin
+          .from('assessment_responses')
+          .select('*')
+          .neq('status', 'archived')
+          .in('assessment_id', sessionIds)
+          .order('created_at', { ascending: true })
+          .range(pageOffset * pageSize, (pageOffset + 1) * pageSize - 1);
 
-    const responseRows = (responses ?? []) as ResponseRow[];
+        if (rErr) throw rErr;
+        if (!resp || resp.length === 0) {
+          hasMore = false;
+        } else {
+          allResponses = [...allResponses, ...resp as ResponseRow[]];
+          if (resp.length < pageSize) {
+            hasMore = false;
+          } else {
+            pageOffset++;
+          }
+        }
+      }
+      responseRows = allResponses;
+    }
 
     // ── 3. Fetch Assessment Results ──────────────────────────────────────────
     const { data: results, error: resErr } = await supabaseAdmin
